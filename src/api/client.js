@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://tellimon-be.vercel.app/api'
+const API_BASE = 'https://tellimon-be.vercel.app/api'
 
 function getToken() {
   return localStorage.getItem('tellimon_token')
@@ -18,7 +18,8 @@ async function request(path, options = {}) {
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  const url = `${API_BASE}${path}`
+  const res = await fetch(url, { ...options, headers })
   const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
