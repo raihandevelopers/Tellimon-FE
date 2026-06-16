@@ -73,7 +73,7 @@ export default function BlockedContacts() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
         <SearchInput
           placeholder="Search blocked contacts..."
@@ -81,16 +81,16 @@ export default function BlockedContacts() {
           onChange={(e) => setSearch(e.target.value)}
           className="lg:max-w-xs flex-1"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
           <input
             type="text"
             placeholder="Enter number to block"
             value={newNumber}
             onChange={(e) => setNewNumber(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="px-4 py-2.5 text-sm border border-border rounded-xl bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand w-52"
+            className="px-4 py-2.5 text-sm border border-border rounded-xl bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand w-full sm:flex-1 lg:w-52"
           />
-          <PrimaryButton onClick={handleAdd}>
+          <PrimaryButton onClick={handleAdd} className="w-full sm:w-auto shrink-0">
             <HiOutlinePlus className="w-4 h-4" />
             Add Blocked Contact
           </PrimaryButton>
@@ -125,7 +125,7 @@ export default function BlockedContacts() {
                 <tr key={contact.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
                   <td className="px-5 py-3.5 font-medium text-gray-900">{contact.number}</td>
                   <td className="px-5 py-3.5">
-                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-light text-brand-dark border border-brand/20">
                       {contact.status}
                     </span>
                   </td>
@@ -134,7 +134,7 @@ export default function BlockedContacts() {
                     <button
                       type="button"
                       onClick={() => handleRemove(contact.id)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
                       aria-label="Remove blocked contact"
                     >
                       <HiOutlineTrash className="w-4 h-4" />

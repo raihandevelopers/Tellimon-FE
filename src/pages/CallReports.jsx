@@ -6,11 +6,11 @@ import Pagination from '../components/ui/Pagination'
 import { api } from '../api/client'
 
 const statusStyles = {
-  answered: 'bg-green-50 text-green-700',
-  missed: 'bg-red-50 text-red-600',
-  busy: 'bg-yellow-50 text-yellow-700',
-  failed: 'bg-gray-100 text-gray-500',
-  'no-answer': 'bg-orange-50 text-orange-600',
+  answered: 'bg-brand-light text-brand-dark border border-brand/20',
+  missed: 'bg-ink-soft text-gray-400 border border-border-dark',
+  busy: 'bg-brand-muted text-ink border border-brand/20',
+  failed: 'bg-ink-muted text-gray-500',
+  'no-answer': 'bg-ink-soft text-gray-500',
 }
 
 function formatDate(iso) {
@@ -66,7 +66,7 @@ export default function CallReports() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
         <div className="p-5">
           <SearchInput
             placeholder="Search by caller, DID, or buyer number..."

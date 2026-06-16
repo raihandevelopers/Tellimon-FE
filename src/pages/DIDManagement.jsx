@@ -50,7 +50,7 @@ export default function DIDManagement() {
                     <span
                       className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         did.status === 'Active'
-                          ? 'bg-green-50 text-green-700'
+                          ? 'bg-brand-light text-brand-dark border border-brand/20'
                           : 'bg-gray-100 text-gray-500'
                       }`}
                     >

@@ -57,4 +57,9 @@ export const api = {
     return request(`/calls${q ? `?${q}` : ''}`)
   },
   getCallStats: () => request('/calls/stats'),
+
+  getActivityLogs: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/activity-logs${q ? `?${q}` : ''}`)
+  },
 }

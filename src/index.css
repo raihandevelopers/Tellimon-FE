@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #b71c1c;
-  --color-brand-dark: #8b0000;
-  --color-brand-light: #fff5f5;
-  --color-brand-muted: #ffcdd2;
-  --color-surface: #f8f9fa;
-  --color-border: #e9ecef;
+  --color-brand: #d4af37;
+  --color-brand-dark: #b8960c;
+  --color-brand-light: #fdf6e3;
+  --color-brand-muted: #f0e4c4;
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #141414;
+  --color-ink-muted: #1f1f1f;
+  --color-surface: #f5f3ee;
+  --color-border: #e8e4da;
+  --color-border-dark: #2a2a2a;
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
@@ -19,9 +23,16 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   background: var(--color-surface);
-  color: #212529;
+  color: var(--color-ink);
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Gold focus ring for inputs */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
 }

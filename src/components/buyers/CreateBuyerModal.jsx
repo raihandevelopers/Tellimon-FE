@@ -41,7 +41,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
@@ -49,9 +49,9 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
         aria-label="Close modal backdrop"
       />
 
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-border">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-gray-900">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
             Create Buyer
           </h2>
           <button
@@ -179,7 +179,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-sm"
+              className="px-5 py-2.5 text-sm font-bold text-ink bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-md shadow-brand/20"
             >
               Create Buyer
             </button>

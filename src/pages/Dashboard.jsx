@@ -56,12 +56,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-3">
         <span
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
+          className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
             connected
-              ? 'bg-green-50 text-green-700 border-green-100'
-              : 'bg-red-50 text-red-600 border-red-100'
+              ? 'bg-brand-light text-brand-dark border-brand/30'
+              : 'bg-ink-soft text-gray-400 border-border-dark'
           }`}
         >
           <HiOutlineBadgeCheck className="w-4 h-4" />
@@ -70,9 +70,10 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={loadStats}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors text-center"
         >
-          Last 30 days: {range}
+          <span className="hidden sm:inline">Last 30 days:</span>
+          <span className="truncate max-w-[200px] sm:max-w-none">{range}</span>
           <HiOutlineRefresh className="w-3.5 h-3.5" />
         </button>
       </div>

@@ -59,7 +59,7 @@ export default function Campaigns() {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
         <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <SearchInput
             placeholder="Search campaigns..."
@@ -111,7 +111,7 @@ export default function Campaigns() {
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           campaign.active
-                            ? 'bg-green-50 text-green-700'
+                            ? 'bg-brand-light text-brand-dark border border-brand/20'
                             : 'bg-gray-100 text-gray-500'
                         }`}
                       >
@@ -123,7 +123,7 @@ export default function Campaigns() {
                       <button
                         type="button"
                         onClick={() => handleRemove(campaign.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
                         aria-label="Delete campaign"
                       >
                         <HiOutlineTrash className="w-4 h-4" />

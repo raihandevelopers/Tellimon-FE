@@ -33,35 +33,35 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-brand relative overflow-hidden items-center justify-center">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-64 h-64 rounded-full border-2 border-white" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full border-2 border-white" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-white" />
+      <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden items-center justify-center">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 left-20 w-64 h-64 rounded-full border-2 border-brand" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full border-2 border-brand" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-brand/50" />
         </div>
         <div className="relative z-10 text-center px-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/10 backdrop-blur mb-8">
-            <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="currentColor">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand/20 backdrop-blur mb-8 ring-2 ring-brand">
+            <svg viewBox="0 0 24 24" className="w-10 h-10 text-brand" fill="currentColor">
               <path d="M12 2C9.5 2 7.5 3.5 6.5 5.5C5.5 4 3.5 2 1 2C1 5 2.5 7.5 5 8.5C3.5 10 2 12.5 2 15.5C2 19.5 5.5 22 10 22C11.5 22 13 21.5 14.5 20.5C16 21.5 17.5 22 19 22C21.5 22 23 20.5 23 18C23 16 22 14.5 20.5 13.5C22 12.5 23 10.5 23 8.5C23 5 20 2 16 2C14.5 2 13 2.5 12 2Z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4 tracking-wide uppercase">
+          <h1 className="text-4xl font-bold text-brand mb-4 tracking-wide uppercase">
             Tellimon
           </h1>
-          <p className="text-white/70 text-lg max-w-md mx-auto leading-relaxed">
+          <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
             Enterprise call forwarding &amp; telephony control panel. Manage campaigns, DIDs, and live calls from one place.
           </p>
-          <div className="mt-10 flex justify-center gap-8 text-white/60 text-sm">
+          <div className="mt-10 flex justify-center gap-8 text-gray-500 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">24/7</div>
+              <div className="text-2xl font-bold text-brand">24/7</div>
               <div>Live Monitoring</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">Asterisk</div>
-              <div>Powered</div>
+              <div className="text-2xl font-bold text-brand">Twilio</div>
+              <div>Ready</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">99.9%</div>
+              <div className="text-2xl font-bold text-brand">99.9%</div>
               <div>Uptime</div>
             </div>
           </div>
@@ -74,8 +74,8 @@ export default function Login() {
             <Logo size="lg" />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>
+          <div className="bg-white rounded-2xl shadow-lg border border-border p-8 ring-1 ring-brand/10">
+            <h2 className="text-2xl font-bold text-ink mb-1">Welcome back</h2>
             <p className="text-sm text-gray-500 mb-8">Sign in to your control room</p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -138,7 +138,7 @@ export default function Login() {
               </div>
 
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
+                <div className="text-sm text-ink bg-brand-light border border-brand/40 rounded-lg px-4 py-2.5">
                   {error}
                 </div>
               )}
