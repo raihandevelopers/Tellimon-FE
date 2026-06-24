@@ -67,6 +67,18 @@ export const api = {
   getCallStats: () => request('/calls/stats'),
   getLiveCalls: () => request('/calls/live'),
 
+  fetchRecording: async (filename) => {
+    const token = getToken()
+    const res = await fetch(`${API_BASE}/calls/recordings/${encodeURIComponent(filename)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to load recording')
+    }
+    return res.blob()
+  },
+
   getActivityLogs: (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return request(`/activity-logs${q ? `?${q}` : ''}`)

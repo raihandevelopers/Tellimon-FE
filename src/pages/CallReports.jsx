@@ -25,12 +25,43 @@ function formatDate(iso) {
   })
 }
 
+function recordingFilename(url) {
+  if (!url) return null
+  const name = url.split('/').pop()?.split('?')[0]
+  return name?.endsWith('.wav') ? name : null
+}
+
 export default function CallReports() {
   const [data, setData] = useState({ calls: [], total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [recordingLoading, setRecordingLoading] = useState(null)
+
+  const openRecording = async (call, download = false) => {
+    const filename = recordingFilename(call.recordingUrl)
+    if (!filename) return
+    setRecordingLoading(call.id)
+    try {
+      const blob = await api.fetchRecording(filename)
+      const objectUrl = URL.createObjectURL(blob)
+      if (download) {
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = filename
+        a.click()
+      } else {
+        window.open(objectUrl, '_blank', 'noopener,noreferrer')
+      }
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 120000)
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Could not load recording')
+    } finally {
+      setRecordingLoading(null)
+    }
+  }
 
   const loadCalls = async () => {
     setLoading(true)
@@ -61,8 +92,7 @@ export default function CallReports() {
   return (
     <div className="space-y-6">
       <InfoBanner>
-        Call records are created when Asterisk posts to the webhook after each call. Recording links use HTTP on the VPS
-        until HTTPS is configured — browsers may block playback from the HTTPS panel.
+        Recordings are streamed securely through Tellimon (HTTPS). Play opens the audio via your logged-in session.
       </InfoBanner>
 
       <div>
@@ -128,22 +158,23 @@ export default function CallReports() {
                     <td className="px-5 py-3.5">
                       {call.recordingUrl ? (
                         <div className="flex items-center gap-2">
-                          <a
-                            href={call.recordingUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-brand hover:text-brand-dark text-xs font-medium"
+                          <button
+                            type="button"
+                            onClick={() => openRecording(call)}
+                            disabled={recordingLoading === call.id}
+                            className="inline-flex items-center gap-1 text-brand hover:text-brand-dark text-xs font-medium disabled:opacity-50"
                           >
                             <HiOutlinePlay className="w-4 h-4" />
-                            Play
-                          </a>
-                          <a
-                            href={call.recordingUrl}
-                            download
-                            className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs"
+                            {recordingLoading === call.id ? 'Loading…' : 'Play'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openRecording(call, true)}
+                            disabled={recordingLoading === call.id}
+                            className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs disabled:opacity-50"
                           >
                             <HiOutlineDownload className="w-4 h-4" />
-                          </a>
+                          </button>
                         </div>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>

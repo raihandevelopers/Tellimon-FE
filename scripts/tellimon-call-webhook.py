@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Post call CDR to Tellimon API after hangup."""
+import glob
 import json
 import os
 import re
@@ -20,6 +21,20 @@ def load_config():
             key, val = line.split('=', 1)
             conf[key.strip()] = val.strip().strip('"')
     return conf
+
+
+def resolve_recording_url(vps_ip, rec_file, unique_id):
+    rec_dir = '/var/www/recordings'
+    for name in (f'{rec_file}.wav', f'{unique_id}.wav'):
+        if name and os.path.isfile(os.path.join(rec_dir, name)):
+            return f'http://{vps_ip}/recordings/{name}'
+    if unique_id:
+        matches = sorted(glob.glob(os.path.join(rec_dir, f'{unique_id}*.wav')))
+        if matches:
+            return f'http://{vps_ip}/recordings/{os.path.basename(matches[-1])}'
+    if rec_file:
+        return f'http://{vps_ip}/recordings/{rec_file}.wav'
+    return ''
 
 
 def main():
@@ -61,7 +76,7 @@ def main():
         'duration': duration,
         'billsec': billsec,
         'uniqueId': unique_id or '',
-        'recordingUrl': f'http://{vps_ip}/recordings/{rec_file}.wav' if rec_file else '',
+        'recordingUrl': resolve_recording_url(vps_ip, rec_file, unique_id),
     }
     if buyer_id and len(buyer_id) == 24:
         payload['buyerId'] = buyer_id
