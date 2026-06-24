@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi'
+import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
@@ -19,6 +19,7 @@ export default function Buyers() {
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editBuyer, setEditBuyer] = useState(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -50,6 +51,12 @@ export default function Buyers() {
     const created = await api.createBuyer(data)
     setBuyers((prev) => [created, ...prev])
     setModalOpen(false)
+  }
+
+  const handleUpdate = async (data) => {
+    const updated = await api.updateBuyer(editBuyer.id, data)
+    setBuyers((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+    setEditBuyer(null)
   }
 
   const handleRemove = async (id) => {
@@ -128,14 +135,24 @@ export default function Buyers() {
                     </td>
                     <td className="px-5 py-3.5 text-gray-500">{formatDate(buyer.createdAt)}</td>
                     <td className="px-5 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(buyer.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
-                        aria-label="Delete buyer"
-                      >
-                        <HiOutlineTrash className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditBuyer(buyer)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                          aria-label="Edit buyer"
+                        >
+                          <HiOutlinePencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(buyer.id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                          aria-label="Delete buyer"
+                        >
+                          <HiOutlineTrash className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -160,6 +177,14 @@ export default function Buyers() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreate}
+      />
+
+      <CreateBuyerModal
+        open={!!editBuyer}
+        onClose={() => setEditBuyer(null)}
+        onSubmit={handleUpdate}
+        initial={editBuyer || undefined}
+        mode="edit"
       />
     </>
   )

@@ -10,7 +10,7 @@ const emptyForm = {
   status: 'Active',
 }
 
-export default function CreateBuyerModal({ open, onClose, onSubmit, initial = emptyForm }) {
+export default function CreateBuyerModal({ open, onClose, onSubmit, initial = emptyForm, mode = 'create' }) {
   useEffect(() => {
     if (!open) return
     const handleKey = (e) => {
@@ -52,7 +52,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
-            Create Buyer
+            {mode === 'edit' ? 'Edit Buyer' : 'Create Buyer'}
           </h2>
           <button
             type="button"
@@ -181,7 +181,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
               type="submit"
               className="px-5 py-2.5 text-sm font-bold text-ink bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-md shadow-brand/20"
             >
-              Create Buyer
+              {mode === 'edit' ? 'Save Changes' : 'Create Buyer'}
             </button>
           </div>
         </form>

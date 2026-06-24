@@ -1,4 +1,4 @@
-const API_BASE = 'https://tellimon-be.vercel.app/api'
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://tellimon-be.vercel.app/api'
 
 function getToken() {
   return localStorage.getItem('tellimon_token')
@@ -39,16 +39,24 @@ export const api = {
 
   getBuyers: () => request('/buyers'),
   createBuyer: (body) => request('/buyers', { method: 'POST', body: JSON.stringify(body) }),
+  updateBuyer: (id, body) => request(`/buyers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteBuyer: (id) => request(`/buyers/${id}`, { method: 'DELETE' }),
 
   getCampaigns: () => request('/campaigns'),
   createCampaign: (body) => request('/campaigns', { method: 'POST', body: JSON.stringify(body) }),
+  updateCampaign: (id, body) =>
+    request(`/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCampaign: (id) => request(`/campaigns/${id}`, { method: 'DELETE' }),
 
   getBlockedContacts: () => request('/blocked-contacts'),
   createBlockedContact: (body) =>
     request('/blocked-contacts', { method: 'POST', body: JSON.stringify(body) }),
   deleteBlockedContact: (id) => request(`/blocked-contacts/${id}`, { method: 'DELETE' }),
+
+  getDIDs: () => request('/dids'),
+  createDID: (body) => request('/dids', { method: 'POST', body: JSON.stringify(body) }),
+  updateDID: (id, body) => request(`/dids/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteDID: (id) => request(`/dids/${id}`, { method: 'DELETE' }),
 
   getDashboardStats: () => request('/dashboard/stats'),
 
@@ -57,6 +65,7 @@ export const api = {
     return request(`/calls${q ? `?${q}` : ''}`)
   },
   getCallStats: () => request('/calls/stats'),
+  getLiveCalls: () => request('/calls/live'),
 
   getActivityLogs: (params = {}) => {
     const q = new URLSearchParams(params).toString()
