@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   HiOutlineShieldCheck,
-  HiOutlinePlus,
+  HiOutlineBan,
   HiOutlinePhone,
   HiOutlineCheckCircle,
   HiOutlinePhoneMissedCall,
@@ -11,21 +11,11 @@ import {
 import StatCard from '../components/ui/StatCard'
 import { api } from '../api/client'
 
-function getDateRange() {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(start.getDate() - 30)
-  const fmt = (d) =>
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  return `${fmt(start)} to ${fmt(end)}`
-}
-
 export default function Dashboard() {
-  const [range, setRange] = useState(getDateRange())
   const [connected, setConnected] = useState(true)
   const [stats, setStats] = useState({
     campaigns: 0,
-    targets: 0,
+    blocked: 0,
     totalCalls: 0,
     answered: 0,
     missed: 0,
@@ -36,7 +26,6 @@ export default function Dashboard() {
       const data = await api.getDashboardStats()
       setStats(data)
       setConnected(true)
-      setRange(getDateRange())
     } catch {
       setConnected(false)
     }
@@ -47,8 +36,8 @@ export default function Dashboard() {
   }, [])
 
   const cards = [
-    { label: 'Campaigns Created', value: stats.campaigns, icon: HiOutlineShieldCheck },
-    { label: 'Targets Created', value: stats.targets, icon: HiOutlinePlus },
+    { label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck },
+    { label: 'Blocked Numbers', value: stats.blocked ?? 0, icon: HiOutlineBan },
     { label: 'Total Calls', value: stats.totalCalls, icon: HiOutlinePhone },
     { label: 'Answered Calls', value: stats.answered, icon: HiOutlineCheckCircle },
     { label: 'Missed Calls', value: stats.missed, icon: HiOutlinePhoneMissedCall },
@@ -70,13 +59,14 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={loadStats}
-          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors text-center"
+          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors"
         >
-          <span className="hidden sm:inline">Last 30 days:</span>
-          <span className="truncate max-w-[200px] sm:max-w-none">{range}</span>
+          Refresh stats
           <HiOutlineRefresh className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      <p className="text-xs text-gray-500">Call totals are all-time from Asterisk webhooks.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {cards.map((card) => (

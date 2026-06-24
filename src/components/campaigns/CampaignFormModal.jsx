@@ -23,7 +23,7 @@ function FormRow({ label, required, children }) {
   )
 }
 
-export default function CampaignFormModal({ open, onClose, onSubmit, initial = emptyForm }) {
+export default function CampaignFormModal({ open, onClose, onSubmit, initial = emptyForm, mode = 'create' }) {
   const [active, setActive] = useState(initial.active)
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
       <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-sm font-bold uppercase tracking-wide text-ink">
-            Campaign Form
+            {mode === 'edit' ? 'Edit Campaign' : 'Create Campaign'}
           </h2>
           <button
             type="button"
@@ -96,19 +96,24 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
           </FormRow>
 
           <FormRow label="Strategy" required>
-            <select
-              id="strategy"
-              name="strategy"
-              defaultValue={initial.strategy}
-              required
-              className={`${inputClass} cursor-pointer`}
-            >
-              {strategies.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+            <div>
+              <select
+                id="strategy"
+                name="strategy"
+                defaultValue={initial.strategy}
+                required
+                className={`${inputClass} cursor-pointer`}
+              >
+                {strategies.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1.5">
+                Saved to your account. Asterisk still uses buyer priority until campaign routing is enabled.
+              </p>
+            </div>
           </FormRow>
 
           <FormRow label="Duplicate Handling" required>
@@ -147,7 +152,7 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
               type="submit"
               className="px-5 py-2.5 text-sm font-bold text-ink bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-md shadow-brand/20"
             >
-              Submit
+              {mode === 'edit' ? 'Save Changes' : 'Create Campaign'}
             </button>
           </div>
         </form>

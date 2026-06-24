@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePhone } from 'react-icons/hi'
+import InfoBanner from '../components/ui/InfoBanner'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
 
@@ -47,7 +48,12 @@ export default function LiveCalls() {
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <InfoBanner>
+        Shows calls active on Asterisk in the last minute. Updates every 5 seconds. Requires the VPS live-sync cron
+        (installed with <code className="text-xs">vps-tellimon-setup.sh</code>).
+      </InfoBanner>
+
       <div className="flex items-center gap-3">
         <div>
           <h1 className="text-xl font-bold text-ink">Live Calls</h1>

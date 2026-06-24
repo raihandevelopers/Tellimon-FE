@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi'
+import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import EmptyState from '../components/ui/EmptyState'
+import InfoBanner from '../components/ui/InfoBanner'
 import { api } from '../api/client'
 
 function formatDidDisplay(number) {
@@ -17,6 +18,7 @@ export default function DIDManagement() {
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editDid, setEditDid] = useState(null)
   const [form, setForm] = useState({ number: '', trunk: '8138073157', campaignId: '', status: 'Active' })
   const [error, setError] = useState('')
 
@@ -62,8 +64,40 @@ export default function DIDManagement() {
     setDids((prev) => prev.filter((d) => d.id !== id))
   }
 
+  const openEdit = (did) => {
+    setEditDid(did)
+    setForm({
+      number: did.number,
+      trunk: did.trunk || '8138073157',
+      campaignId: did.campaignId || '',
+      status: did.status || 'Active',
+    })
+  }
+
+  const handleEdit = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      await api.updateDID(editDid.id, {
+        trunk: form.trunk,
+        campaignId: form.campaignId || null,
+        status: form.status,
+      })
+      setEditDid(null)
+      load()
+    } catch (err) {
+      setError(err.message || 'Failed to update DID')
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <InfoBanner>
+        DIDs must also be routed in your SIP provider (XoloIP) to this Asterisk server. All active DIDs currently
+        forward to the highest-priority <strong>Active</strong> buyer. Campaign links are for organization and future
+        routing.
+      </InfoBanner>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">DID Management</h1>
@@ -123,14 +157,24 @@ export default function DIDManagement() {
                   <td className="px-5 py-3.5 text-gray-600 font-mono text-xs">{did.trunk}</td>
                   <td className="px-5 py-3.5 text-gray-600">{did.callsToday ?? 0}</td>
                   <td className="px-5 py-3.5">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(did.id)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
-                      aria-label="Delete DID"
-                    >
-                      <HiOutlineTrash className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(did)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                        aria-label="Edit DID"
+                      >
+                        <HiOutlinePencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(did.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                        aria-label="Delete DID"
+                      >
+                        <HiOutlineTrash className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -189,6 +233,66 @@ export default function DIDManagement() {
                 </button>
                 <button type="submit" className="px-4 py-2 text-sm font-bold bg-brand rounded-xl">
                   Save DID
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editDid && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setEditDid(null)}
+            aria-label="Close"
+          />
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-border p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-ink mb-4">
+              Edit DID — {formatDidDisplay(editDid.number)}
+            </h2>
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Campaign</label>
+                <select
+                  value={form.campaignId}
+                  onChange={(e) => setForm({ ...form, campaignId: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                >
+                  <option value="">Default (priority buyer)</option>
+                  {campaigns.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">SIP Trunk</label>
+                <input
+                  value={form.trunk}
+                  onChange={(e) => setForm({ ...form, trunk: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-border rounded-xl font-mono"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setEditDid(null)} className="px-4 py-2 text-sm border rounded-xl">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 text-sm font-bold bg-brand rounded-xl">
+                  Save Changes
                 </button>
               </div>
             </form>

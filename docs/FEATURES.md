@@ -65,17 +65,15 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 
 ## 2. Dashboard — **Live**
 
-**What it does:** Overview of campaigns, targets, and call volume.
+**What it does:** Overview of campaigns, blocked contacts, and call volume (all-time).
 
 **How it works:**
 1. Page loads → `GET /api/dashboard/stats`
 2. Backend counts documents in MongoDB for the logged-in user:
    - Campaigns created
-   - Targets created
+   - Blocked contacts
    - Total / answered / missed calls (from Call Records)
-3. Stat cards refresh when user clicks the date-range button
-
-**Data source:** Real MongoDB counts. Call stats update when Asterisk sends webhook data.
+3. **Refresh stats** button reloads from API (not a date-range filter)
 
 ---
 
@@ -88,11 +86,11 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 |-------|---------|
 | Name | Label for the buyer |
 | Number | Phone number to ring (E.164, e.g. `+919876543210`) |
-| Daily cap | Max calls per day (0 = unlimited) — enforcement planned |
-| Priority | Higher priority buyers get calls first — routing planned |
-| Ring timeout | Seconds to ring before giving up — synced to Asterisk |
-| Concurrent calls | Max simultaneous calls to this buyer |
-| Status | Active / Inactive / Paused |
+| Daily cap | Max calls per day (0 = unlimited) — **panel only, not enforced** |
+| Priority | Higher priority **Active** buyer receives all forwards (synced to Asterisk) |
+| Ring timeout | Seconds to ring before hangup — **synced to Asterisk** |
+| Concurrent calls | Max simultaneous calls — **panel only, not enforced** |
+| Status | **Active** = eligible for forwarding; Inactive/Paused = skipped |
 
 **How it works today:**
 1. Create / **edit** buyer → `POST` / `PUT /api/buyers` → saved in MongoDB
@@ -110,31 +108,22 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 
 ---
 
-## 4. Campaigns — **Live** (routing logic: **Planned**)
+## 4. Campaigns — **Live** (Asterisk routing: **Planned**)
 
-**What it does:** Groups call routing rules under a named campaign.
+**What it does:** Groups DIDs and stores routing rules for future use.
 
-**Fields:**
-| Field | Purpose |
-|-------|---------|
-| Name | Campaign label |
-| Strategy | Sticky, Round Robin, Priority, Random — how buyers are chosen |
-| Duplicate handling | What to do if the same caller calls again |
-| Active | On/off toggle |
+**Fields:** Name, Strategy, Duplicate handling, Active toggle — all saved to API.
+
+**UI honesty:** Strategy and duplicate handling are **not applied on Asterisk yet**. All calls use the highest-priority Active buyer. Campaign links on DIDs are for organization until per-campaign routing ships.
 
 **How it works today:**
-1. Create campaign modal → `POST /api/campaigns`
+1. Create / **edit** campaign → `POST` / `PUT /api/campaigns`
 2. List, search, delete via API
-
-**How it will work with Asterisk (planned):**
-1. Each DID is linked to a campaign
-2. When a call arrives, Asterisk loads campaign settings
-3. Applies strategy to select which buyer(s) to dial
-4. Duplicate handling decides if repeat callers go to same or different buyer
+3. Link DIDs to campaigns in DID Management (label only for now)
 
 ---
 
-## 5. Blocked Contacts — **Live** (Asterisk check: **Partial**)
+## 5. Blocked Contacts — **Live** (Asterisk sync: **~2 min delay**)
 
 **What it does:** Block specific phone numbers from being forwarded.
 
@@ -209,17 +198,17 @@ See also: `backend/docs/ASTERISK_CDR_RECORDING.md`
 
 ---
 
-## 8. DID Management — **Live** (after backend deploy)
+## 8. DID Management — **Live**
 
-**What it does:** Manage inbound phone numbers (DIDs) and link them to campaigns.
+**What it does:** Manage inbound phone numbers and link them to campaigns (label).
 
 **How it works:**
 1. `GET/POST/PUT/DELETE /api/dids` — CRUD in MongoDB
 2. UI lists DIDs with campaign, trunk, calls-today count
-3. Seed DIDs on first backend start: `18889567021`, `18889567022`, `18889569295`
+3. Edit DID to change campaign, status, trunk
 4. VPS sync pulls DIDs to `/etc/tellimon/dids.json` every 2 min
 
-**Still planned:** Asterisk dialplan routing per DID → campaign strategy (today all DIDs use priority buyer)
+**Important:** You must also point each DID to this Asterisk server in XoloIP. Forwarding still uses the global priority buyer until per-DID routing is built.
 
 ---
 

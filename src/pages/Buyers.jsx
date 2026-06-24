@@ -4,6 +4,7 @@ import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
+import InfoBanner from '../components/ui/InfoBanner'
 import CreateBuyerModal from '../components/buyers/CreateBuyerModal'
 import { api } from '../api/client'
 
@@ -66,7 +67,13 @@ export default function Buyers() {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
+      <InfoBanner>
+        <strong>Active</strong> buyers with the highest <strong>priority</strong> receive all forwarded calls
+        (synced to Asterisk every ~2 min). <strong>Ring timeout</strong> is applied on the server. Daily cap and
+        concurrent limits are stored but not enforced yet.
+      </InfoBanner>
+
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
         <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <SearchInput
             placeholder="Search buyers..."

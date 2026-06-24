@@ -3,6 +3,7 @@ import { HiOutlinePlay, HiOutlineDownload } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
+import InfoBanner from '../components/ui/InfoBanner'
 import { api } from '../api/client'
 
 const statusStyles = {
@@ -59,6 +60,11 @@ export default function CallReports() {
 
   return (
     <div className="space-y-6">
+      <InfoBanner>
+        Call records are created when Asterisk posts to the webhook after each call. Recording links use HTTP on the VPS
+        until HTTPS is configured — browsers may block playback from the HTTPS panel.
+      </InfoBanner>
+
       <div>
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">

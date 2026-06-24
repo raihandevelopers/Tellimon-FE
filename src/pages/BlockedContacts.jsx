@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import PrimaryButton from '../components/ui/PrimaryButton'
+import InfoBanner from '../components/ui/InfoBanner'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
 import { api } from '../api/client'
@@ -73,7 +74,11 @@ export default function BlockedContacts() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
+    <>
+      <InfoBanner>
+        Blocked numbers are synced to Asterisk every ~2 min. Matching callers are rejected before forward.
+      </InfoBanner>
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
         <SearchInput
           placeholder="Search blocked contacts..."
@@ -155,5 +160,6 @@ export default function BlockedContacts() {
         onPerPageChange={setPerPage}
       />
     </div>
+    </>
   )
 }

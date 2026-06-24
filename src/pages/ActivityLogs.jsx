@@ -25,12 +25,17 @@ const categoryStyles = {
 const actionIcons = {
   login: HiOutlineLogin,
   buyer_created: HiOutlineUserAdd,
+  buyer_updated: HiOutlineUserAdd,
   buyer_deleted: HiOutlineTrash,
   campaign_created: HiOutlineSpeakerphone,
+  campaign_updated: HiOutlineSpeakerphone,
   campaign_deleted: HiOutlineTrash,
   contact_blocked: HiOutlineBan,
   contact_unblocked: HiOutlineBan,
   call_completed: HiOutlinePhone,
+  did_created: HiOutlinePhone,
+  did_updated: HiOutlinePhone,
+  did_deleted: HiOutlineTrash,
 }
 
 const categories = ['all', 'auth', 'buyer', 'campaign', 'blocked', 'call', 'system']

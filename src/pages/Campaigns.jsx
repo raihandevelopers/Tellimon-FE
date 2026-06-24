@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { HiOutlinePlus, HiOutlineTrash } from 'react-icons/hi'
+import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
+import InfoBanner from '../components/ui/InfoBanner'
 import CampaignFormModal from '../components/campaigns/CampaignFormModal'
 import { api } from '../api/client'
 
@@ -19,6 +20,7 @@ export default function Campaigns() {
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editCampaign, setEditCampaign] = useState(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -52,6 +54,12 @@ export default function Campaigns() {
     setModalOpen(false)
   }
 
+  const handleUpdate = async (data) => {
+    const updated = await api.updateCampaign(editCampaign.id, data)
+    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+    setEditCampaign(null)
+  }
+
   const handleRemove = async (id) => {
     await api.deleteCampaign(id)
     setCampaigns((prev) => prev.filter((c) => c.id !== id))
@@ -59,7 +67,13 @@ export default function Campaigns() {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
+      <InfoBanner>
+        Campaigns group DIDs for reporting. <strong>Strategy and duplicate handling are saved</strong> but
+        Asterisk still forwards all calls to the highest-priority <strong>Active</strong> buyer until per-campaign
+        routing is enabled.
+      </InfoBanner>
+
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
         <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <SearchInput
             placeholder="Search campaigns..."
@@ -120,14 +134,24 @@ export default function Campaigns() {
                     </td>
                     <td className="px-5 py-3.5 text-gray-500">{formatDate(campaign.createdAt)}</td>
                     <td className="px-5 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(campaign.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
-                        aria-label="Delete campaign"
-                      >
-                        <HiOutlineTrash className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditCampaign(campaign)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                          aria-label="Edit campaign"
+                        >
+                          <HiOutlinePencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(campaign.id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-colors"
+                          aria-label="Delete campaign"
+                        >
+                          <HiOutlineTrash className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -152,6 +176,15 @@ export default function Campaigns() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
+        mode="create"
+      />
+
+      <CampaignFormModal
+        open={!!editCampaign}
+        onClose={() => setEditCampaign(null)}
+        onSubmit={handleUpdate}
+        initial={editCampaign || undefined}
+        mode="edit"
       />
     </>
   )
