@@ -132,6 +132,11 @@ if [ -f "${SCRIPT_DIR}/tellimon-pick-buyer.py" ]; then
   chmod +x /usr/local/bin/tellimon-pick-buyer.py
 fi
 
+if [ -f "${SCRIPT_DIR}/tellimon-call-webhook.py" ]; then
+  cp "${SCRIPT_DIR}/tellimon-call-webhook.py" /usr/local/bin/tellimon-call-webhook.py
+  chmod +x /usr/local/bin/tellimon-call-webhook.py
+fi
+
 cat > /etc/tellimon/config <<CFGEOF
 API_BASE=https://tellimon-be.vercel.app/api
 DEMO_EMAIL=demo@tellimon.com
@@ -175,7 +180,10 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,ExecIf($["${DIALSTATUS}"="BUSY"]?Set(CALL_STATUS=busy))
  same => n,ExecIf($["${DIALSTATUS}"="NOANSWER"]?Set(CALL_STATUS=no-answer))
  same => n,ExecIf($["${CALL_STATUS}"=""]?Set(CALL_STATUS=missed))
- same => n,System(curl -s -X POST ${TELLIMON_WEBHOOK} -H "Content-Type: application/json" -H "x-asterisk-secret: ${TELLIMON_WEBHOOK_SECRET}" -d "{\"userId\":\"${TELLIMON_USER}\",\"caller\":\"${CALLER}\",\"did\":\"${DID}\",\"buyerId\":\"${BUYER_ID}\",\"buyerNumber\":\"${BUYER}\",\"campaignId\":\"${CAMPAIGN_ID}\",\"status\":\"${CALL_STATUS}\",\"duration\":${DURATION},\"billsec\":${CDR(billsec)},\"uniqueId\":\"${UNIQUEID}\",\"recordingUrl\":\"http://${VPS_IP}/recordings/${REC_FILE}.wav\"}")
+ same => n,Set(BILLSEC=${CDR(billsec)})
+ same => n,ExecIf($["${BILLSEC}"=""]?Set(BILLSEC=${DURATION}))
+ same => n,ExecIf($["${CALLER}"=""]?Set(CALLER=unknown))
+ same => n,System(python3 /usr/local/bin/tellimon-call-webhook.py ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE})
  same => n,Hangup()
 
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)
