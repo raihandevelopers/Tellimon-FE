@@ -35,6 +35,10 @@ buyers=[b for b in json.load(sys.stdin) if b.get('status')=='Active']
 buyers.sort(key=lambda x: int(x.get('priority',0)), reverse=True)
 open('/etc/tellimon/buyers.json','w').write(json.dumps(buyers))
 if not buyers:
+    import os
+    for f in ('buyer.number','buyer.id','buyer.ring_timeout','buyer.number.tmp','buyer.id.tmp','buyer.ring_timeout.tmp'):
+        try: os.remove('/etc/tellimon/'+f)
+        except OSError: pass
     sys.exit(0)
 top=buyers[0]
 n=re.sub(r'[^0-9]','',top.get('number',''))

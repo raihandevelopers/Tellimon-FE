@@ -6,33 +6,66 @@
 
 ---
 
-## What it does
+## Current status (verified)
 
-| You can… | What happens |
-|----------|----------------|
-| Add **buyers** | Phone numbers that can receive forwarded calls |
-| Create **campaigns** | Group buyers and choose routing strategy |
-| Assign **DIDs** | Link inbound numbers to a campaign or a specific buyer |
-| Set **priority / caps** | Control who gets calls, daily limits, and concurrent limits |
+| Component | Status |
+|-----------|--------|
+| Web panel + API | Live |
+| Phone server (Asterisk) | Live — SIP trunk registered |
+| Inbound DIDs (3 numbers) | Active → **Default Forwarding** campaign |
+| Campaign routing (priority, sticky, etc.) | Live on each call |
+| Blocked numbers | Live (~2 min sync) |
+| Call reports + recordings | Live |
+| Live calls view | Live |
+| **Active buyer** | **None** — add one to receive calls |
+
+**Last verified:** Old buyer `+919302103116` is fully removed from the panel and server. Calls will not forward until at least one **Active** buyer is added.
+
+---
+
+## Your inbound numbers
+
+| DID | Campaign |
+|-----|----------|
+| +1 (888) 956-7021 | Default Forwarding |
+| +1 (888) 956-7022 | Default Forwarding |
+| +1 (888) 956-9295 | Default Forwarding |
+
+These must also point to the Asterisk server in **XoloIP** (device `8138073157`).
+
+---
+
+## What you can do in the panel
+
+| Action | What happens |
+|--------|----------------|
+| Add **buyers** | Phone numbers that receive forwarded calls |
+| Create **campaigns** | Group buyers + choose routing strategy |
+| Assign **DIDs** | Link numbers to a campaign or one specific buyer |
+| Set **priority / caps** | Who gets calls, daily limits, concurrent limits |
 | **Block** numbers | Blocked callers are rejected before forwarding |
-| View **call reports** | Caller, duration, status, and recordings |
-| Watch **live calls** | See calls in progress |
+| **Call reports** | Duration, status, play recordings |
+| **Live calls** | See calls in progress |
 
 ---
 
 ## How a call works
 
 ```
-Caller dials your business number (DID)
+Caller dials your DID (e.g. +1 888 956-7021)
         ↓
-Tellimon picks the buyer (campaign strategy or direct assignment)
+XoloIP → Asterisk phone server
         ↓
-Checks: blocked? daily cap? already on another call?
+Tellimon picks buyer (campaign strategy or direct DID assignment)
         ↓
-Rings the buyer — records the call
+Checks: blocked? daily cap? concurrent limit?
         ↓
-Report + recording appear in the panel
+Rings buyer — records call
+        ↓
+Call report + recording in panel
 ```
+
+Buyer changes take effect on the **next call** (no wait).
 
 ---
 
@@ -42,12 +75,22 @@ Report + recording appear in the panel
 |----------|----------|
 | **Priority** | Highest-priority eligible buyer |
 | **Round Robin** | Rotates evenly across campaign buyers |
-| **Sticky** | Repeat callers go to the same buyer who answered last |
+| **Sticky** | Repeat callers → same buyer who answered last |
 | **Random** | Random eligible buyer |
 
-**Duplicate handling:** Same Buyer / Different Buyer / Normal — controls repeat callers.
+**Duplicate handling:** Normal / Same Buyer / Different Buyer — for repeat callers.
 
-**Per-DID override:** Assign one buyer directly on a DID to skip campaign logic.
+**Per-DID override:** Set one buyer directly on a DID to skip campaign logic.
+
+**Default Forwarding** campaign uses **Priority** strategy. Leave campaign buyer list empty to use all active buyers.
+
+---
+
+## Change the buyer number
+
+1. **Buyers** → delete old or set **Inactive**
+2. **Add buyer** → new mobile, status **Active**, set priority
+3. Next inbound call uses the new number automatically
 
 ---
 
@@ -56,15 +99,16 @@ Report + recording appear in the panel
 | Item | Details |
 |------|---------|
 | Panel | https://hitechpbxworld.com |
-| Demo | `demo@tellimon.com` / `demo123` |
+| Login | `demo@tellimon.com` / `demo123` |
 
 ---
 
 ## If calls don’t forward
 
-1. Buyer is **Active** with correct number.
-2. DID is **Active** and linked in XoloIP to the phone server.
-3. Campaign has buyers assigned (or leave empty for all active buyers).
+1. At least one buyer is **Active** with the correct number.
+2. DID is **Active** in DID Management.
+3. DID is routed to Asterisk in **XoloIP**.
 4. Buyer has not hit **daily cap** or **concurrent** limit.
+5. For India (+91) outbound, XoloIP international termination must be enabled.
 
 Technical detail: [FEATURES.md](./FEATURES.md)
