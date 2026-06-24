@@ -24,17 +24,18 @@ buyers.sort(key=lambda x: int(x.get('priority',0)), reverse=True)
 open('/etc/tellimon/buyers.json','w').write(json.dumps(buyers))
 if not buyers:
     sys.exit(0)
-n=re.sub(r'[^0-9]','',buyers[0].get('number',''))
-print(n)
-print(buyers[0].get('id',''))
-" > /etc/tellimon/buyer.sync.tmp
-if [ -s /etc/tellimon/buyer.sync.tmp ]; then
-  head -1 /etc/tellimon/buyer.sync.tmp > /etc/tellimon/buyer.number.tmp
-  tail -1 /etc/tellimon/buyer.sync.tmp > /etc/tellimon/buyer.id.tmp
-  [ -s /etc/tellimon/buyer.number.tmp ] && mv /etc/tellimon/buyer.number.tmp /etc/tellimon/buyer.number
-  [ -s /etc/tellimon/buyer.id.tmp ] && mv /etc/tellimon/buyer.id.tmp /etc/tellimon/buyer.id
-  rm -f /etc/tellimon/buyer.sync.tmp
-fi
+top=buyers[0]
+n=re.sub(r'[^0-9]','',top.get('number',''))
+ring=int(top.get('ringTimeout') or 60)
+if ring < 1:
+    ring=60
+open('/etc/tellimon/buyer.number.tmp','w').write(n)
+open('/etc/tellimon/buyer.id.tmp','w').write(str(top.get('id','')))
+open('/etc/tellimon/buyer.ring_timeout.tmp','w').write(str(ring))
+"
+[ -s /etc/tellimon/buyer.number.tmp ] && mv /etc/tellimon/buyer.number.tmp /etc/tellimon/buyer.number
+[ -s /etc/tellimon/buyer.id.tmp ] && mv /etc/tellimon/buyer.id.tmp /etc/tellimon/buyer.id
+[ -s /etc/tellimon/buyer.ring_timeout.tmp ] && mv /etc/tellimon/buyer.ring_timeout.tmp /etc/tellimon/buyer.ring_timeout
 
 curl -s "${API_BASE}/blocked-contacts" -H "Authorization: Bearer ${TOKEN}" | python3 -c "
 import sys,json,re
@@ -136,7 +137,8 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,Set(BUYER=${SHELL(cat /etc/tellimon/buyer.number 2>/dev/null | tr -d '[:space:]')})
  same => n,Set(BUYER_ID=${SHELL(cat /etc/tellimon/buyer.id 2>/dev/null | tr -d '[:space:]')})
  same => n,GotoIf($["${BUYER}"=""]?nobuyer,1)
- same => n,Set(RING_TIMEOUT=60)
+ same => n,Set(RING_TIMEOUT=${SHELL(cat /etc/tellimon/buyer.ring_timeout 2>/dev/null | tr -d '[:space:]')})
+ same => n,ExecIf($["${RING_TIMEOUT}"=""]?Set(RING_TIMEOUT=60))
  same => n,Set(REC_FILE=${UNIQUEID})
  same => n,Set(MONITOR_DIR=/var/www/recordings)
  same => n,System(mkdir -p ${MONITOR_DIR})

@@ -90,7 +90,7 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 | Number | Phone number to ring (E.164, e.g. `+919876543210`) |
 | Daily cap | Max calls per day (0 = unlimited) — enforcement planned |
 | Priority | Higher priority buyers get calls first — routing planned |
-| Ring timeout | Seconds to ring before giving up |
+| Ring timeout | Seconds to ring before giving up — synced to Asterisk |
 | Concurrent calls | Max simultaneous calls to this buyer |
 | Status | Active / Inactive / Paused |
 
@@ -102,7 +102,7 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 **How it works with Asterisk (today):**
 1. Cron on VPS runs `/usr/local/bin/tellimon-sync.sh` every 2 minutes
 2. Script logs into Tellimon API and writes highest-priority **Active** buyer to `/etc/tellimon/buyer.number` and `buyer.id`
-3. Full buyer list synced to `/etc/tellimon/buyers.json`
+3. Full buyer list synced to `/etc/tellimon/buyers.json`; ring timeout to `buyer.ring_timeout`
 4. Inbound call dialplan reads buyer file and forwards via `Dial(PJSIP/${BUYER}@xolo-endpoint)`
 5. On hangup, webhook POST includes `buyerId`, `buyerNumber`, and recording URL (with `x-asterisk-secret` header)
 
