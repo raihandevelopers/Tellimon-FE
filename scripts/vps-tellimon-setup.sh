@@ -1,6 +1,7 @@
 #!/bin/bash
 # Tellimon VPS setup — dialplan, sync, recordings, live calls
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p /etc/tellimon /etc/asterisk/extensions.d /var/www/recordings
 
 WEBHOOK_SECRET="${WEBHOOK_SECRET:-tellimon-asterisk-webhook-secret}"
@@ -17,6 +18,17 @@ TOKEN=$(curl -s -X POST "${API_BASE}/auth/login" \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))")
 [ -z "$TOKEN" ] && exit 1
 
+curl -s "${API_BASE}/routing/snapshot" -H "Authorization: Bearer ${TOKEN}" | python3 -c "
+import sys,json
+try:
+    data=json.load(sys.stdin)
+    if isinstance(data, dict):
+        open('/etc/tellimon/routing.json','w').write(json.dumps(data))
+except Exception:
+    pass
+" || true
+
+# Legacy single-buyer files (fallback)
 curl -s "${API_BASE}/buyers" -H "Authorization: Bearer ${TOKEN}" | python3 -c "
 import sys,json,re
 buyers=[b for b in json.load(sys.stdin) if b.get('status')=='Active']
@@ -111,6 +123,11 @@ rm -f "$TMP"
 LIVEEOF
 chmod +x /usr/local/bin/tellimon-live-sync.sh
 
+if [ -f "${SCRIPT_DIR}/tellimon-pick-buyer.py" ]; then
+  cp "${SCRIPT_DIR}/tellimon-pick-buyer.py" /usr/local/bin/tellimon-pick-buyer.py
+  chmod +x /usr/local/bin/tellimon-pick-buyer.py
+fi
+
 cat > /etc/tellimon/config <<CFGEOF
 API_BASE=https://tellimon-be.vercel.app/api
 DEMO_EMAIL=demo@tellimon.com
@@ -134,10 +151,13 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,Set(CALLER=${FILTER(0-9,${CALLERID(num)})})
  same => n,Set(DID=${FILTER(0-9,${EXTEN})})
  same => n,Gosub(tellimon-check-blocked,s,1(${CALLER}))
- same => n,Set(BUYER=${SHELL(cat /etc/tellimon/buyer.number 2>/dev/null | tr -d '[:space:]')})
- same => n,Set(BUYER_ID=${SHELL(cat /etc/tellimon/buyer.id 2>/dev/null | tr -d '[:space:]')})
+ same => n,Set(PICK=${SHELL(python3 /usr/local/bin/tellimon-pick-buyer.py ${DID} ${CALLER} 2>/dev/null | tr -d '\n')})
+ same => n,GotoIf($["${PICK}"=""]?nobuyer,1)
+ same => n,Set(BUYER=${CUT(PICK,|,1)})
+ same => n,Set(BUYER_ID=${CUT(PICK,|,2)})
+ same => n,Set(RING_TIMEOUT=${CUT(PICK,|,3)})
+ same => n,Set(CAMPAIGN_ID=${CUT(PICK,|,4)})
  same => n,GotoIf($["${BUYER}"=""]?nobuyer,1)
- same => n,Set(RING_TIMEOUT=${SHELL(cat /etc/tellimon/buyer.ring_timeout 2>/dev/null | tr -d '[:space:]')})
  same => n,ExecIf($["${RING_TIMEOUT}"=""]?Set(RING_TIMEOUT=60))
  same => n,Set(REC_FILE=${UNIQUEID})
  same => n,Set(MONITOR_DIR=/var/www/recordings)
@@ -151,7 +171,7 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,ExecIf($["${DIALSTATUS}"="BUSY"]?Set(CALL_STATUS=busy))
  same => n,ExecIf($["${DIALSTATUS}"="NOANSWER"]?Set(CALL_STATUS=no-answer))
  same => n,ExecIf($["${CALL_STATUS}"=""]?Set(CALL_STATUS=missed))
- same => n,System(curl -s -X POST ${TELLIMON_WEBHOOK} -H "Content-Type: application/json" -H "x-asterisk-secret: ${TELLIMON_WEBHOOK_SECRET}" -d "{\"userId\":\"${TELLIMON_USER}\",\"caller\":\"${CALLER}\",\"did\":\"${DID}\",\"buyerId\":\"${BUYER_ID}\",\"buyerNumber\":\"${BUYER}\",\"status\":\"${CALL_STATUS}\",\"duration\":${DURATION},\"billsec\":${CDR(billsec)},\"uniqueId\":\"${UNIQUEID}\",\"recordingUrl\":\"http://${VPS_IP}/recordings/${REC_FILE}.wav\"}")
+ same => n,System(curl -s -X POST ${TELLIMON_WEBHOOK} -H "Content-Type: application/json" -H "x-asterisk-secret: ${TELLIMON_WEBHOOK_SECRET}" -d "{\"userId\":\"${TELLIMON_USER}\",\"caller\":\"${CALLER}\",\"did\":\"${DID}\",\"buyerId\":\"${BUYER_ID}\",\"buyerNumber\":\"${BUYER}\",\"campaignId\":\"${CAMPAIGN_ID}\",\"status\":\"${CALL_STATUS}\",\"duration\":${DURATION},\"billsec\":${CDR(billsec)},\"uniqueId\":\"${UNIQUEID}\",\"recordingUrl\":\"http://${VPS_IP}/recordings/${REC_FILE}.wav\"}")
  same => n,Hangup()
 
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)

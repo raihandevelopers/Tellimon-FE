@@ -16,18 +16,24 @@ function formatDidDisplay(number) {
 export default function DIDManagement() {
   const [dids, setDids] = useState([])
   const [campaigns, setCampaigns] = useState([])
+  const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editDid, setEditDid] = useState(null)
-  const [form, setForm] = useState({ number: '', trunk: '8138073157', campaignId: '', status: 'Active' })
+  const [form, setForm] = useState({ number: '', trunk: '8138073157', campaignId: '', buyerId: '', status: 'Active' })
   const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
     try {
-      const [didList, campaignList] = await Promise.all([api.getDIDs(), api.getCampaigns()])
+      const [didList, campaignList, buyerList] = await Promise.all([
+        api.getDIDs(),
+        api.getCampaigns(),
+        api.getBuyers(),
+      ])
       setDids(didList)
       setCampaigns(campaignList)
+      setBuyers(buyerList)
     } catch (err) {
       console.error(err)
       setError(err.message || 'Failed to load DIDs')
@@ -48,11 +54,12 @@ export default function DIDManagement() {
         number: form.number,
         trunk: form.trunk,
         campaignId: form.campaignId || undefined,
+        buyerId: form.buyerId || undefined,
         status: form.status,
       })
       setDids((prev) => [created, ...prev])
       setModalOpen(false)
-      setForm({ number: '', trunk: '8138073157', campaignId: '', status: 'Active' })
+      setForm({ number: '', trunk: '8138073157', campaignId: '', buyerId: '', status: 'Active' })
       load()
     } catch (err) {
       setError(err.message || 'Failed to add DID')
@@ -70,6 +77,7 @@ export default function DIDManagement() {
       number: did.number,
       trunk: did.trunk || '8138073157',
       campaignId: did.campaignId || '',
+      buyerId: did.buyerId || '',
       status: did.status || 'Active',
     })
   }
@@ -81,6 +89,7 @@ export default function DIDManagement() {
       await api.updateDID(editDid.id, {
         trunk: form.trunk,
         campaignId: form.campaignId || null,
+        buyerId: form.buyerId || null,
         status: form.status,
       })
       setEditDid(null)
@@ -93,9 +102,8 @@ export default function DIDManagement() {
   return (
     <div className="space-y-4">
       <InfoBanner>
-        DIDs must also be routed in your SIP provider (XoloIP) to this Asterisk server. All active DIDs currently
-        forward to the highest-priority <strong>Active</strong> buyer. Campaign links are for organization and future
-        routing.
+        Point each DID to this Asterisk server in XoloIP. Assign a <strong>campaign</strong> for strategy-based routing
+        or a <strong>direct buyer</strong> override. Inactive DIDs reject calls.
       </InfoBanner>
 
       <div className="flex items-center justify-between">
@@ -119,6 +127,7 @@ export default function DIDManagement() {
             <tr className="bg-gray-50 text-left border-b border-border">
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">DID Number</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
+              <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Campaign</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asterisk Trunk</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Calls Today</th>
@@ -128,13 +137,13 @@ export default function DIDManagement() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">
                   Loading DIDs…
                 </td>
               </tr>
             ) : dids.length === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <EmptyState message="No DIDs configured yet." />
                 </td>
               </tr>
@@ -153,7 +162,8 @@ export default function DIDManagement() {
                       {did.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600">{did.campaignName || '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{did.buyerName || '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{did.campaignName || 'Default'}</td>
                   <td className="px-5 py-3.5 text-gray-600 font-mono text-xs">{did.trunk}</td>
                   <td className="px-5 py-3.5 text-gray-600">{did.callsToday ?? 0}</td>
                   <td className="px-5 py-3.5">
@@ -205,13 +215,30 @@ export default function DIDManagement() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Direct buyer (optional)</label>
+                <select
+                  value={form.buyerId}
+                  onChange={(e) => setForm({ ...form, buyerId: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                >
+                  <option value="">Use campaign / default routing</option>
+                  {buyers
+                    .filter((b) => b.status === 'Active')
+                    .map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name || b.number}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Campaign</label>
                 <select
                   value={form.campaignId}
                   onChange={(e) => setForm({ ...form, campaignId: e.target.value })}
                   className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
                 >
-                  <option value="">Default (priority buyer)</option>
+                  <option value="">Default (all active buyers)</option>
                   {campaigns.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -254,13 +281,30 @@ export default function DIDManagement() {
             </h2>
             <form onSubmit={handleEdit} className="space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Direct buyer (optional)</label>
+                <select
+                  value={form.buyerId}
+                  onChange={(e) => setForm({ ...form, buyerId: e.target.value })}
+                  className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                >
+                  <option value="">Use campaign / default routing</option>
+                  {buyers
+                    .filter((b) => b.status === 'Active')
+                    .map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name || b.number}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Campaign</label>
                 <select
                   value={form.campaignId}
                   onChange={(e) => setForm({ ...form, campaignId: e.target.value })}
                   className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
                 >
-                  <option value="">Default (priority buyer)</option>
+                  <option value="">Default (all active buyers)</option>
                   {campaigns.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}

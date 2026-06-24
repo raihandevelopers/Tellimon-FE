@@ -6,32 +6,187 @@ Tellimon is a **call forwarding control panel**. Operators use the web UI to con
 
 ## System overview
 
-```
-Caller dials DID number
-        ↓
-SIP Provider (VoIP.ms, Telnyx, etc.)
-        ↓
-Asterisk on Ubuntu VPS (91.108.104.221)
-   • Checks blocked list (future: live API lookup)
-   • Picks buyer from campaign rules (future)
-   • Forwards call to buyer phone
-   • Records call (MixMonitor)
-   • POSTs CDR to Tellimon API when call ends
-        ↓
-Tellimon Backend (tellimon-be.vercel.app)
-   • Saves call record to MongoDB
-   • Logs activity
-        ↓
-Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
-   • Dashboard, Call Reports, Buyers, etc.
+| Layer | Tech | URL / host |
+|-------|------|------------|
+| Frontend | React + Vite + Tailwind | tellimon-fe.vercel.app / hitechpbxworld.com |
+| Backend API | Node.js + Express + JWT | tellimon-be.vercel.app |
+| Database | MongoDB Atlas | Cloud |
+| Telephony | Asterisk 20 + PJSIP (XoloIP trunk) | 91.108.104.221 |
+
+---
+
+## How it works — full flow
+
+### 1. Architecture (three layers)
+
+```mermaid
+flowchart TB
+  subgraph Panel["Tellimon Panel (Vercel)"]
+    FE[React UI]
+    BE[Node API]
+    DB[(MongoDB)]
+    FE <-->|JWT REST| BE
+    BE <--> DB
+  end
+
+  subgraph VPS["Asterisk VPS (91.108.104.221)"]
+    SYNC[tellimon-sync.sh<br/>every 2 min]
+    LIVE[tellimon-live-sync.sh<br/>every 1 min]
+    AST[Asterisk dialplan]
+    REC[/var/www/recordings/]
+    NGX[nginx :80 /recordings/]
+    SYNC -->|writes files| CFG[/etc/tellimon/]
+    CFG --> AST
+    AST --> REC
+    REC --> NGX
+    LIVE -->|reads channels| AST
+  end
+
+  subgraph Carrier["SIP / PSTN"]
+    XOLO[XoloIP trunk]
+    DID[DIDs e.g. 18889567021]
+  end
+
+  BE <-->|login + pull buyers/blocked/dids| SYNC
+  BE <-->|POST live-sync| LIVE
+  BE <-->|POST webhook CDR| AST
+  DID --> XOLO --> AST
+  AST -->|Dial outbound| XOLO
+  FE -->|Play recording| NGX
 ```
 
-| Layer | Tech | Deployed at |
-|-------|------|-------------|
-| Frontend | React + Vite + Tailwind | Vercel |
-| Backend API | Node.js + Express + JWT | Vercel |
-| Database | MongoDB Atlas | Cloud |
-| Telephony | Asterisk 20 + PJSIP | Ubuntu VPS |
+### 2. Operator configures the panel (panel → VPS sync)
+
+```mermaid
+sequenceDiagram
+  participant Op as Operator
+  participant UI as Tellimon UI
+  participant API as tellimon-be
+  participant DB as MongoDB
+  participant Cron as VPS cron (2 min)
+  participant Files as /etc/tellimon/*
+
+  Op->>UI: Create/edit buyer, block number, add DID
+  UI->>API: POST/PUT /api/buyers, blocked-contacts, dids
+  API->>DB: Save
+  API-->>UI: OK + Activity Log entry
+
+  Note over Cron,Files: Every ~2 minutes
+  Cron->>API: Login + GET buyers, blocked-contacts, dids
+  API-->>Cron: JSON
+  Cron->>Files: buyer.number, buyer.id, buyer.ring_timeout
+  Cron->>Files: buyers.json, blocked.list, dids.json
+```
+
+**What syncs to Asterisk today:**
+
+| Panel setting | Synced? | VPS file | Used on call? |
+|---------------|---------|----------|---------------|
+| Buyer number (highest priority **Active**) | Yes (~2 min) | `buyer.number` | Yes — who gets the call |
+| Buyer ring timeout | Yes | `buyer.ring_timeout` | Yes — `Dial(..., timeout)` |
+| Blocked numbers | Yes | `blocked.list` | Yes — caller rejected |
+| DIDs + campaign links | Yes | `dids.json` | **No** — label only for now |
+| Campaign strategy | Yes | `routing.json` | Yes — via `/api/routing/resolve` |
+| Daily cap / concurrent | Yes | API (real-time) | Yes — on each call |
+
+### 3. Inbound call flow (what happens on a real call)
+
+```mermaid
+sequenceDiagram
+  participant Caller
+  participant Xolo as XoloIP / PSTN
+  participant AST as Asterisk VPS
+  participant Buyer as Buyer phone
+  participant API as tellimon-be
+  participant UI as Call Reports / Dashboard
+
+  Caller->>Xolo: Dials DID (e.g. 18889567021)
+  Xolo->>AST: SIP INVITE to VPS
+  AST->>AST: Read caller ID + DID
+  AST->>AST: Check blocked.list → hangup if blocked
+  AST->>AST: Read buyer.number + ring_timeout
+  AST->>AST: MixMonitor → /var/www/recordings/{id}.wav
+  AST->>Buyer: Dial via xolo-endpoint (outbound SIP)
+  alt Answered
+    Buyer-->>AST: 200 OK
+    Caller<<->>Buyer: Conversation
+  else No answer / busy
+    AST->>AST: Set status missed/busy/no-answer
+  end
+  AST->>AST: Call ends — compute duration
+  AST->>API: POST /api/calls/webhook (secret header)
+  Note over API: Saves CallRecord, Activity Log
+  UI->>API: GET /api/calls, /api/dashboard/stats
+  UI->>UI: Show duration + Play recording link
+```
+
+**MVP routing rule (today):** every inbound DID → **one** highest-priority **Active** buyer. Campaign and per-DID buyer rules are **not** applied on Asterisk yet.
+
+### 4. Live calls flow (while call is in progress)
+
+```mermaid
+sequenceDiagram
+  participant AST as Asterisk
+  participant Live as tellimon-live-sync.sh
+  participant API as tellimon-be
+  participant UI as Live Calls page
+
+  loop Every 1 min on VPS
+    Live->>AST: core show channels concise
+    Live->>API: POST /api/calls/live-sync
+  end
+  loop Every 5 sec in browser
+    UI->>API: GET /api/calls/live
+    API-->>UI: Active channels (last 45s)
+  end
+```
+
+### 5. What's done vs planned
+
+```mermaid
+flowchart LR
+  subgraph Done["Done — Live"]
+    A1[Auth + JWT]
+    A2[Buyers CRUD + edit]
+    A3[Priority buyer → Asterisk]
+    A4[Ring timeout → Asterisk]
+    A5[Blocked list → Asterisk]
+    A6[Campaigns CRUD + edit]
+    A7[DID CRUD + edit]
+    A8[Webhook → Call Reports]
+    A9[Duration + recording URL]
+    A10[Dashboard stats]
+    A11[Activity Logs]
+    A12[Live Calls polling]
+    A13[XoloIP trunk registered]
+    A14[Inbound DID → Asterisk]
+  end
+
+  subgraph Planned["Planned — not on Asterisk yet"]
+    P1[Campaign strategy routing]
+    P2[Per-DID → buyer mapping]
+    P3[Daily cap enforcement]
+    P4[Concurrent call limits]
+    P5[Real-time block API lookup]
+    P6[HTTPS recordings domain]
+    P7[AMI / WebSocket live calls]
+  end
+
+  subgraph External["Carrier / ops"]
+    E1[India +91 termination via XoloIP]
+  end
+```
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Panel ↔ API ↔ MongoDB | **Done** | All screens use live APIs |
+| Buyer forward + ring timeout | **Done** | Synced every ~2 min |
+| Blocked callers | **Done** | Synced file check in dialplan |
+| Call duration in reports | **Done** | From webhook `billsec` / `duration` |
+| Recording files + Play link | **Done** | HTTP on VPS; needs real call to populate |
+| Campaign strategy on calls | **Planned** | Saved in DB only |
+| Per-DID routing | **Planned** | DIDs synced but dialplan ignores |
+| India outbound to buyer | **Blocked at carrier** | XoloIP must enable intl termination |
 
 ---
 
@@ -86,10 +241,10 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 |-------|---------|
 | Name | Label for the buyer |
 | Number | Phone number to ring (E.164, e.g. `+919876543210`) |
-| Daily cap | Max calls per day (0 = unlimited) — **panel only, not enforced** |
-| Priority | Higher priority **Active** buyer receives all forwards (synced to Asterisk) |
-| Ring timeout | Seconds to ring before hangup — **synced to Asterisk** |
-| Concurrent calls | Max simultaneous calls — **panel only, not enforced** |
+| Daily cap | Max calls per day (0 = unlimited) — **enforced on each call** |
+| Priority | Used when strategy is **Priority** |
+| Ring timeout | Seconds to ring before hangup — **per buyer** |
+| Concurrent calls | Max simultaneous calls — **enforced live** |
 | Status | **Active** = eligible for forwarding; Inactive/Paused = skipped |
 
 **How it works today:**
@@ -97,29 +252,26 @@ Tellimon Frontend (tellimon-fe.vercel.app / hitechpbxworld.com)
 2. List, search, paginate, delete via API
 3. Activity log entry on create/update/delete
 
-**How it works with Asterisk (today):**
-1. Cron on VPS runs `/usr/local/bin/tellimon-sync.sh` every 2 minutes
-2. Script logs into Tellimon API and writes highest-priority **Active** buyer to `/etc/tellimon/buyer.number` and `buyer.id`
-3. Full buyer list synced to `/etc/tellimon/buyers.json`; ring timeout to `buyer.ring_timeout`
-4. Inbound call dialplan reads buyer file and forwards via `Dial(PJSIP/${BUYER}@xolo-endpoint)`
-5. On hangup, webhook POST includes `buyerId`, `buyerNumber`, and recording URL (with `x-asterisk-secret` header)
-
-**Still planned:** per-campaign buyer pools, round robin, sub-minute sync
+**How it works with Asterisk:**
+1. VPS sync pulls routing snapshot every 2 min (`/api/routing/snapshot`)
+2. On each inbound call, `tellimon-pick-buyer.py` calls `POST /api/routing/resolve`
+3. Resolver applies campaign strategy, daily cap, concurrent limits, duplicate/sticky rules
+4. Dialplan forwards to selected buyer; webhook saves `buyerId` and `campaignId`
 
 ---
 
-## 4. Campaigns — **Live** (Asterisk routing: **Planned**)
+## 4. Campaigns — **Live**
 
-**What it does:** Groups DIDs and stores routing rules for future use.
+**What it does:** Groups buyers and defines how calls are routed.
 
-**Fields:** Name, Strategy, Duplicate handling, Active toggle — all saved to API.
+**Fields:** Name, Strategy, Duplicate handling, Active toggle, **assigned buyers**.
 
-**UI honesty:** Strategy and duplicate handling are **not applied on Asterisk yet**. All calls use the highest-priority Active buyer. Campaign links on DIDs are for organization until per-campaign routing ships.
-
-**How it works today:**
-1. Create / **edit** campaign → `POST` / `PUT /api/campaigns`
-2. List, search, delete via API
-3. Link DIDs to campaigns in DID Management (label only for now)
+**How it works:**
+1. Create / edit campaign → assign one or more buyers (empty = all active buyers)
+2. Link DIDs to campaigns in DID Management
+3. On each inbound call, Asterisk calls `POST /api/routing/resolve` with DID + caller
+4. Strategy picks buyer: Priority, Round Robin, Sticky, Random
+5. Duplicate handling applies for repeat callers
 
 ---
 
@@ -205,10 +357,8 @@ See also: `backend/docs/ASTERISK_CDR_RECORDING.md`
 **How it works:**
 1. `GET/POST/PUT/DELETE /api/dids` — CRUD in MongoDB
 2. UI lists DIDs with campaign, trunk, calls-today count
-3. Edit DID to change campaign, status, trunk
-4. VPS sync pulls DIDs to `/etc/tellimon/dids.json` every 2 min
-
-**Important:** You must also point each DID to this Asterisk server in XoloIP. Forwarding still uses the global priority buyer until per-DID routing is built.
+3. Edit DID: campaign, optional **direct buyer**, status, trunk
+4. Optional `buyerId` bypasses campaign strategy for that number
 
 ---
 
@@ -238,25 +388,18 @@ See also: `backend/docs/ASTERISK_CDR_RECORDING.md`
 
 ---
 
-## End-to-end call flow (target state)
+## Quick reference — one inbound call
 
 ```
-1. Caller dials +1-800-XXX-XXXX (DID)
-2. SIP provider sends call to Asterisk VPS :5060
-3. Asterisk dialplan:
-   a. Is caller blocked? → reject (planned)
-   b. Which campaign owns this DID? (planned)
-   c. Which buyer to ring? (priority / round robin) (planned)
-   d. Start MixMonitor recording
-   e. Dial buyer mobile via SIP trunk
-4. Buyer answers or misses — call ends
-5. Asterisk curl POST → /api/calls/webhook
-6. Tellimon saves CallRecord + ActivityLog
-7. Operator sees call in Call Reports + Dashboard
-8. Operator plays recording from VPS /recordings/ URL
+1. Caller dials DID (XoloIP → Asterisk 91.108.104.221)
+2. Dialplan: blocked? → hangup | else read buyer.number + ring_timeout
+3. MixMonitor records → /var/www/recordings/{UNIQUEID}.wav
+4. Dial(PJSIP/buyer@xolo-endpoint, timeout)
+5. Hangup → curl POST /api/calls/webhook → MongoDB
+6. Panel: Call Reports (duration + Play), Dashboard counts, Activity Log
 ```
 
-**Current MVP:** Steps 3a–3b use **synced files** from Tellimon API (`buyer.number`, `blocked.list`). Campaign/DID routing per number is still planned.
+See **How it works — full flow** above for diagrams.
 
 ---
 
@@ -276,7 +419,8 @@ See also: `backend/docs/ASTERISK_CDR_RECORDING.md`
 | GET | `/api/calls/live` | Yes | Active calls (polling) |
 | POST | `/api/calls/webhook` | Secret header | Asterisk CDR ingest |
 | POST | `/api/calls/live-sync` | Secret header | Asterisk active channel sync |
-| GET | `/api/activity-logs` | Yes | Audit trail |
+| GET | `/api/routing/snapshot` | Yes | Full routing bundle for VPS sync |
+| POST | `/api/routing/resolve` | Secret header | Pick buyer for inbound call |
 | GET | `/api/health` | No | Health check |
 
 ---
@@ -324,9 +468,10 @@ Re-run setup: `scripts/vps-tellimon-setup.sh` (from repo, via SSH).
 | 6 | Edit buyer in UI + API | **Done** (deploy backend) |
 | 7 | DID Management backend + UI | **Done** (deploy backend) |
 | 8 | Live Calls polling | **Done** (deploy backend for live-sync endpoint) |
-| 9 | Campaign routing strategies in Asterisk | Planned |
-| 10 | HTTPS + domain for recordings | Planned |
-| 11 | Daily cap / concurrent limits enforcement | Planned |
+| 9 | Campaign routing strategies in Asterisk | **Done** |
+| 10 | Per-DID buyer override | **Done** |
+| 11 | Daily cap / concurrent limits enforcement | **Done** |
+| 12 | HTTPS + domain for recordings | Planned |
 
 ---
 

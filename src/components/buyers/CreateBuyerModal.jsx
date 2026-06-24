@@ -105,7 +105,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
                 defaultValue={initial.dailyCap}
                 className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
-              <p className="text-xs text-gray-400 mt-1.5">0 = unlimited. Stored only — not enforced yet.</p>
+              <p className="text-xs text-gray-400 mt-1.5">0 = unlimited. Enforced on each inbound call.</p>
             </div>
 
             <div>
@@ -120,7 +120,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
                 defaultValue={initial.priority}
                 className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
-              <p className="text-xs text-gray-400 mt-1.5">Higher value wins among Active buyers. Synced to Asterisk.</p>
+              <p className="text-xs text-gray-400 mt-1.5">Higher value wins when strategy is Priority.</p>
             </div>
 
             <div>
@@ -136,7 +136,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
                 className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
               <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-                Seconds to ring before hangup. Synced to Asterisk every ~2 min.
+                Seconds to ring before hangup. Applied per call.
               </p>
             </div>
 
@@ -152,7 +152,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
                 defaultValue={initial.concurrentCalls}
                 className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
-              <p className="text-xs text-gray-400 mt-1.5">Stored only — not enforced yet.</p>
+              <p className="text-xs text-gray-400 mt-1.5">Max simultaneous calls to this buyer. Enforced live.</p>
             </div>
 
             <div className="sm:col-span-1">

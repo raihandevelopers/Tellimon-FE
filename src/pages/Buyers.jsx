@@ -68,9 +68,9 @@ export default function Buyers() {
   return (
     <>
       <InfoBanner>
-        <strong>Active</strong> buyers with the highest <strong>priority</strong> receive all forwarded calls
-        (synced to Asterisk every ~2 min). <strong>Ring timeout</strong> is applied on the server. Daily cap and
-        concurrent limits are stored but not enforced yet.
+        Buyers receive forwarded calls based on <strong>campaign strategy</strong> or DID assignment.{' '}
+        <strong>Priority</strong>, <strong>ring timeout</strong>, <strong>daily cap</strong>, and{' '}
+        <strong>concurrent limits</strong> are enforced on each inbound call.
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">

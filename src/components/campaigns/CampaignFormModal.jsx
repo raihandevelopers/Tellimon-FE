@@ -6,6 +6,7 @@ const emptyForm = {
   strategy: 'Sticky',
   duplicateHandling: 'Normal',
   active: true,
+  buyerIds: [],
 }
 
 const strategies = ['Sticky', 'Round Robin', 'Priority', 'Random']
@@ -23,12 +24,23 @@ function FormRow({ label, required, children }) {
   )
 }
 
-export default function CampaignFormModal({ open, onClose, onSubmit, initial = emptyForm, mode = 'create' }) {
+export default function CampaignFormModal({
+  open,
+  onClose,
+  onSubmit,
+  initial = emptyForm,
+  mode = 'create',
+  buyers = [],
+}) {
   const [active, setActive] = useState(initial.active)
+  const [selectedBuyers, setSelectedBuyers] = useState(initial.buyerIds || [])
 
   useEffect(() => {
-    if (open) setActive(initial.active ?? true)
-  }, [open, initial.active])
+    if (open) {
+      setActive(initial.active ?? true)
+      setSelectedBuyers(initial.buyerIds || [])
+    }
+  }, [open, initial.active, initial.buyerIds])
 
   useEffect(() => {
     if (!open) return
@@ -45,6 +57,12 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
 
   if (!open) return null
 
+  const toggleBuyer = (id) => {
+    setSelectedBuyers((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const form = new FormData(e.target)
@@ -53,11 +71,14 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
       strategy: form.get('strategy'),
       duplicateHandling: form.get('duplicateHandling'),
       active,
+      buyerIds: selectedBuyers,
     })
   }
 
   const inputClass =
     'w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand'
+
+  const activeBuyers = buyers.filter((b) => b.status === 'Active')
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -95,25 +116,49 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
             />
           </FormRow>
 
-          <FormRow label="Strategy" required>
-            <div>
-              <select
-                id="strategy"
-                name="strategy"
-                defaultValue={initial.strategy}
-                required
-                className={`${inputClass} cursor-pointer`}
-              >
-                {strategies.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-1.5">
-                Saved to your account. Asterisk still uses buyer priority until campaign routing is enabled.
+          <FormRow label="Buyers">
+            <div className="space-y-2">
+              {activeBuyers.length === 0 ? (
+                <p className="text-xs text-gray-400">No active buyers. Add buyers first.</p>
+              ) : (
+                activeBuyers.map((b) => (
+                  <label
+                    key={b.id}
+                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedBuyers.includes(b.id)}
+                      onChange={() => toggleBuyer(b.id)}
+                      className="rounded border-border text-brand focus:ring-brand/20"
+                    />
+                    <span>
+                      {b.name || b.number}{' '}
+                      <span className="text-gray-400 font-mono text-xs">P{b.priority}</span>
+                    </span>
+                  </label>
+                ))
+              )}
+              <p className="text-xs text-gray-400">
+                Leave empty to use all active buyers. Strategy picks among selected buyers.
               </p>
             </div>
+          </FormRow>
+
+          <FormRow label="Strategy" required>
+            <select
+              id="strategy"
+              name="strategy"
+              defaultValue={initial.strategy}
+              required
+              className={`${inputClass} cursor-pointer`}
+            >
+              {strategies.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </FormRow>
 
           <FormRow label="Duplicate Handling" required>
@@ -133,11 +178,7 @@ export default function CampaignFormModal({ open, onClose, onSubmit, initial = e
           </FormRow>
 
           <FormRow label="Active">
-            <Toggle
-              id="campaign-active"
-              checked={active}
-              onChange={setActive}
-            />
+            <Toggle id="campaign-active" checked={active} onChange={setActive} />
           </FormRow>
 
           <div className="flex items-center justify-end gap-3 py-5">
