@@ -76,7 +76,8 @@ export const api = {
       const data = await res.json().catch(() => ({}))
       throw new Error(data.error || 'Failed to load recording')
     }
-    return res.blob()
+    const buffer = await res.arrayBuffer()
+    return new Blob([buffer], { type: res.headers.get('content-type') || 'audio/wav' })
   },
 
   getActivityLogs: (params = {}) => {

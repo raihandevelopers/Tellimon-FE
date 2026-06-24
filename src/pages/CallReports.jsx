@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { HiOutlinePlay, HiOutlineDownload } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
 import InfoBanner from '../components/ui/InfoBanner'
+import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
 import { api } from '../api/client'
 
 const statusStyles = {
@@ -38,23 +39,36 @@ export default function CallReports() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [recordingLoading, setRecordingLoading] = useState(null)
+  const [player, setPlayer] = useState({ open: false, call: null, url: '', filename: '' })
+  const playerUrlRef = useRef('')
 
-  const openRecording = async (call, download = false) => {
+  const revokePlayerUrl = () => {
+    if (playerUrlRef.current) {
+      URL.revokeObjectURL(playerUrlRef.current)
+      playerUrlRef.current = ''
+    }
+  }
+
+  const closePlayer = () => {
+    revokePlayerUrl()
+    setPlayer({ open: false, call: null, url: '', filename: '' })
+  }
+
+  const loadRecordingBlob = async (call) => {
     const filename = recordingFilename(call.recordingUrl)
-    if (!filename) return
+    if (!filename) throw new Error('No recording file')
+    const blob = await api.fetchRecording(filename)
+    return { blob, filename }
+  }
+
+  const playRecording = async (call) => {
     setRecordingLoading(call.id)
     try {
-      const blob = await api.fetchRecording(filename)
+      const { blob, filename } = await loadRecordingBlob(call)
+      revokePlayerUrl()
       const objectUrl = URL.createObjectURL(blob)
-      if (download) {
-        const a = document.createElement('a')
-        a.href = objectUrl
-        a.download = filename
-        a.click()
-      } else {
-        window.open(objectUrl, '_blank', 'noopener,noreferrer')
-      }
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 120000)
+      playerUrlRef.current = objectUrl
+      setPlayer({ open: true, call, url: objectUrl, filename })
     } catch (err) {
       console.error(err)
       alert(err.message || 'Could not load recording')
@@ -62,6 +76,34 @@ export default function CallReports() {
       setRecordingLoading(null)
     }
   }
+
+  const downloadRecording = async (call) => {
+    setRecordingLoading(call.id)
+    try {
+      const { blob, filename } = await loadRecordingBlob(call)
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filename
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Could not download recording')
+    } finally {
+      setRecordingLoading(null)
+    }
+  }
+
+  const downloadFromPlayer = () => {
+    if (!player.url || !player.filename) return
+    const a = document.createElement('a')
+    a.href = player.url
+    a.download = player.filename
+    a.click()
+  }
+
+  useEffect(() => () => revokePlayerUrl(), [])
 
   const loadCalls = async () => {
     setLoading(true)
@@ -92,7 +134,7 @@ export default function CallReports() {
   return (
     <div className="space-y-6">
       <InfoBanner>
-        Recordings are streamed securely through Tellimon (HTTPS). Play opens the audio via your logged-in session.
+        Click Play to open the built-in recorder. Audio streams over HTTPS — no mixed-content issues.
       </InfoBanner>
 
       <div>
@@ -160,7 +202,7 @@ export default function CallReports() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => openRecording(call)}
+                            onClick={() => playRecording(call)}
                             disabled={recordingLoading === call.id}
                             className="inline-flex items-center gap-1 text-brand hover:text-brand-dark text-xs font-medium disabled:opacity-50"
                           >
@@ -169,9 +211,10 @@ export default function CallReports() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openRecording(call, true)}
+                            onClick={() => downloadRecording(call)}
                             disabled={recordingLoading === call.id}
                             className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs disabled:opacity-50"
+                            aria-label="Download recording"
                           >
                             <HiOutlineDownload className="w-4 h-4" />
                           </button>
@@ -198,6 +241,15 @@ export default function CallReports() {
           }}
         />
       </div>
+
+      <RecordingPlayerModal
+        open={player.open}
+        onClose={closePlayer}
+        call={player.call}
+        audioUrl={player.url}
+        filename={player.filename}
+        onDownload={downloadFromPlayer}
+      />
     </div>
   )
 }
