@@ -2,10 +2,10 @@ import logoImage from '../assets/logo.jpeg'
 
 export default function Logo({ size = 'md', variant = 'light', showText = false }) {
   const sizes = {
-    sm: 'h-8',
-    md: 'h-10',
-    lg: 'h-14',
-    xl: 'h-24',
+    sm: 'h-11',
+    md: 'h-16',
+    lg: 'h-20',
+    xl: 'h-36',
   }
   const textSizes = {
     sm: { title: 'text-sm', subtitle: 'text-[10px]' },
