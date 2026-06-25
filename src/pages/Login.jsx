@@ -40,14 +40,9 @@ export default function Login() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-brand/50" />
         </div>
         <div className="relative z-10 text-center px-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand/20 backdrop-blur mb-8 ring-2 ring-brand">
-            <svg viewBox="0 0 24 24" className="w-10 h-10 text-brand" fill="currentColor">
-              <path d="M12 2C9.5 2 7.5 3.5 6.5 5.5C5.5 4 3.5 2 1 2C1 5 2.5 7.5 5 8.5C3.5 10 2 12.5 2 15.5C2 19.5 5.5 22 10 22C11.5 22 13 21.5 14.5 20.5C16 21.5 17.5 22 19 22C21.5 22 23 20.5 23 18C23 16 22 14.5 20.5 13.5C22 12.5 23 10.5 23 8.5C23 5 20 2 16 2C14.5 2 13 2.5 12 2Z" />
-            </svg>
+          <div className="flex justify-center mb-8">
+            <Logo size="xl" variant="dark" />
           </div>
-          <h1 className="text-4xl font-bold text-brand mb-4 tracking-wide uppercase">
-            Tellimon
-          </h1>
           <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
             Enterprise call forwarding &amp; telephony control panel. Manage campaigns, DIDs, and live calls from one place.
           </p>
