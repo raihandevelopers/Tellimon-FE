@@ -94,19 +94,22 @@ try:
 except OSError:
     pass
 
-with open(path) as f:
+ with open(path) as f:
     for line in f:
         parts = line.strip().split('!')
         if len(parts) < 3:
             continue
         channel_id, context, exten = parts[0], parts[1], parts[2]
+        if 'PJSIP' not in channel_id:
+            continue
         if context != 'from-trunk' and 'xolo-endpoint' not in channel_id:
             continue
         caller = parts[7] if len(parts) > 7 else ''
+        did = exten if context == 'from-trunk' else (parts[2] if len(parts) > 2 else '')
         calls.append({
             'channelId': channel_id,
             'caller': caller,
-            'did': exten,
+            'did': did,
             'buyerNumber': buyer,
             'route': 'xolo-endpoint',
             'startedAt': datetime.now(timezone.utc).isoformat(),
@@ -184,7 +187,7 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,ExecIf($["${BILLSEC}"=""]?Set(BILLSEC=${DURATION}))
  same => n,ExecIf($["${CALLER}"=""]?Set(CALLER=unknown))
  same => n,ExecIf($["${CAMPAIGN_ID}"=""]?Set(CAMPAIGN_ID=none))
- same => n,System(python3 /usr/local/bin/tellimon-call-webhook.py ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE})
+ same => n,System(/usr/local/bin/tellimon-post-call.sh ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE})
  same => n,Hangup()
 
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)
@@ -234,5 +237,6 @@ systemctl reload nginx
 asterisk -rx 'dialplan reload'
 (crontab -l 2>/dev/null | grep -v tellimon-sync | grep -v tellimon-live; \
  echo '*/2 * * * * /usr/local/bin/tellimon-sync.sh >/dev/null 2>&1'; \
- echo '*/1 * * * * /usr/local/bin/tellimon-live-sync.sh >/dev/null 2>&1') | crontab -
+ echo '* * * * * /usr/local/bin/tellimon-live-sync.sh >/dev/null 2>&1'; \
+ echo '* * * * * sleep 30; /usr/local/bin/tellimon-live-sync.sh >/dev/null 2>&1') | crontab -
 echo DONE

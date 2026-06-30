@@ -106,7 +106,13 @@ def main():
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             resp.read()
-    except Exception:
+    except Exception as exc:
+        log_path = '/var/log/tellimon-webhook.log'
+        try:
+            with open(log_path, 'a') as log:
+                log.write(f'webhook error: {exc} payload={payload}\n')
+        except OSError:
+            pass
         sys.exit(1)
 
 

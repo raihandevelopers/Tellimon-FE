@@ -6,16 +6,7 @@ import InfoBanner from '../components/ui/InfoBanner'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
 import { api } from '../api/client'
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+import { formatDateTime } from '../utils/formatDate'
 
 export default function BlockedContacts() {
   const [contacts, setContacts] = useState([])
@@ -134,7 +125,7 @@ export default function BlockedContacts() {
                       {contact.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-500">{formatDate(contact.createdAt)}</td>
+                  <td className="px-5 py-3.5 text-gray-500">{formatDateTime(contact.createdAt)}</td>
                   <td className="px-5 py-3.5">
                     <button
                       type="button"

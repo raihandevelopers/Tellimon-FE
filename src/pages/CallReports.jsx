@@ -6,6 +6,7 @@ import Pagination from '../components/ui/Pagination'
 import InfoBanner from '../components/ui/InfoBanner'
 import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
 import { api } from '../api/client'
+import { formatDateTime } from '../utils/formatDate'
 
 const statusStyles = {
   answered: 'bg-brand-light text-brand-dark border border-brand/20',
@@ -13,17 +14,6 @@ const statusStyles = {
   busy: 'bg-brand-muted text-ink border border-brand/20',
   failed: 'bg-ink-muted text-gray-500',
   'no-answer': 'bg-ink-soft text-gray-500',
-}
-
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function recordingFilename(url) {
@@ -196,7 +186,7 @@ export default function CallReports() {
                         {call.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDate(call.startedAt || call.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-gray-500">{formatDateTime(call.startedAt || call.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       {call.recordingUrl ? (
                         <div className="flex items-center gap-2">

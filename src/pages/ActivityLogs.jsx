@@ -12,6 +12,7 @@ import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
 import { api } from '../api/client'
+import { formatDateTime } from '../utils/formatDate'
 
 const categoryStyles = {
   auth: 'bg-brand-light text-brand-dark border border-brand/20',
@@ -39,18 +40,6 @@ const actionIcons = {
 }
 
 const categories = ['all', 'auth', 'buyer', 'campaign', 'blocked', 'call', 'system']
-
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
 
 function formatAction(action) {
   return action?.replace(/_/g, ' ') || '—'
@@ -173,7 +162,7 @@ export default function ActivityLogs() {
                           {log.category}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(log.createdAt)}</td>
+                      <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDateTime(log.createdAt)}</td>
                     </tr>
                   )
                 })

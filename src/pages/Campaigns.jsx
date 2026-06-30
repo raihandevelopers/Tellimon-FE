@@ -7,14 +7,7 @@ import Pagination from '../components/ui/Pagination'
 import InfoBanner from '../components/ui/InfoBanner'
 import CampaignFormModal from '../components/campaigns/CampaignFormModal'
 import { api } from '../api/client'
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
+import { formatDate } from '../utils/formatDate'
 
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState([])
