@@ -1,6 +1,6 @@
 import logoImage from '../assets/logo.jpeg'
 
-export default function Logo({ size = 'md', variant = 'light', showText = false }) {
+export default function Logo({ size = 'md', variant = 'light', showText = false, wide = false }) {
   const sizes = {
     sm: 'h-12',
     md: 'h-20',
@@ -19,11 +19,15 @@ export default function Logo({ size = 'md', variant = 'light', showText = false 
   const s = textSizes[size] ?? textSizes.md
 
   return (
-    <div className="flex items-center gap-3">
+    <div className={`flex items-center gap-3 ${wide ? 'w-full justify-center' : ''}`}>
       <img
         src={logoImage}
         alt="HITECH PBX"
-        className={`${sizes[size] ?? sizes.md} w-auto object-contain shrink-0`}
+        className={
+          wide
+            ? 'w-full max-w-[220px] h-auto object-contain shrink-0'
+            : `${sizes[size] ?? sizes.md} w-auto object-contain shrink-0`
+        }
       />
       {showText && (
         <div>
