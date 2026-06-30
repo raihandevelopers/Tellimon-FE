@@ -38,10 +38,20 @@ def resolve_recording_url(vps_ip, rec_file, unique_id):
 
 
 def main():
-    if len(sys.argv) < 10:
+    if len(sys.argv) < 9:
         sys.exit(1)
 
-    caller, did, buyer, buyer_id, campaign_id, status, duration, billsec, unique_id, rec_file = sys.argv[1:11]
+    args = sys.argv[1:]
+    if len(args) == 9:
+        args.insert(4, 'none')
+
+    while len(args) < 10:
+        args.append('')
+
+    caller, did, buyer, buyer_id, campaign_id, status, duration, billsec, unique_id, rec_file = args[:10]
+
+    if campaign_id in ('', 'none', '-', 'null'):
+        campaign_id = ''
 
     conf = load_config()
     api_base = conf.get('WEBHOOK_URL', conf.get('API_BASE', '')).replace('/api/calls/webhook', '/api')
