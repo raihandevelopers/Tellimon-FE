@@ -39,7 +39,7 @@ export default function LiveCalls() {
 
   useEffect(() => {
     load()
-    const poll = setInterval(load, 5000)
+    const poll = setInterval(load, 3000)
     const timer = setInterval(() => setTick((t) => t + 1), 1000)
     return () => {
       clearInterval(poll)
@@ -50,14 +50,13 @@ export default function LiveCalls() {
   return (
     <div className="space-y-4">
       <InfoBanner>
-        Shows calls active on Asterisk in the last minute. Updates every 5 seconds. Requires the VPS live-sync cron
-        (installed with <code className="text-xs">vps-tellimon-setup.sh</code>).
+        Shows calls active on Asterisk. Server syncs every 3 seconds via PM2 on the VPS.
       </InfoBanner>
 
       <div className="flex items-center gap-3">
         <div>
           <h1 className="text-xl font-bold text-ink">Live Calls</h1>
-          <p className="text-sm text-gray-500 mt-1">Active calls on your Asterisk server (refreshes every 5s)</p>
+          <p className="text-sm text-gray-500 mt-1">Active calls on your Asterisk server (refreshes every 3s)</p>
         </div>
         <span className="ml-auto flex items-center gap-2 text-sm text-brand font-medium">
           <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />

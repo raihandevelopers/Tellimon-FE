@@ -63,7 +63,7 @@ export default function Dashboard() {
   useEffect(() => {
     loadStats()
     loadLiveCalls()
-    const pollLive = setInterval(loadLiveCalls, 5000)
+    const pollLive = setInterval(loadLiveCalls, 3000)
     return () => clearInterval(pollLive)
   }, [])
 
@@ -110,7 +110,7 @@ export default function Dashboard() {
       </div>
 
       <p className="text-xs text-gray-500">
-        Live calls refresh every 5 seconds. Call totals are all-time from Asterisk webhooks.
+        Live calls sync every 3 seconds on the server. Call totals are all-time from Asterisk webhooks.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

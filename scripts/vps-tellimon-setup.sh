@@ -72,6 +72,11 @@ except Exception:
 SYNCEOF
 chmod +x /usr/local/bin/tellimon-sync.sh
 
+if [ -f "${SCRIPT_DIR}/tellimon-live-sync-daemon.sh" ]; then
+  cp "${SCRIPT_DIR}/tellimon-live-sync-daemon.sh" /usr/local/bin/tellimon-live-sync-daemon.sh
+  chmod +x /usr/local/bin/tellimon-live-sync-daemon.sh
+fi
+
 cat > /usr/local/bin/tellimon-live-sync.sh <<'LIVEEOF'
 #!/bin/bash
 set -euo pipefail
@@ -236,7 +241,9 @@ nginx -t
 systemctl reload nginx
 asterisk -rx 'dialplan reload'
 (crontab -l 2>/dev/null | grep -v tellimon-sync | grep -v tellimon-live; \
- echo '*/2 * * * * /usr/local/bin/tellimon-sync.sh >/dev/null 2>&1'; \
- echo '* * * * * /usr/local/bin/tellimon-live-sync.sh >/dev/null 2>&1'; \
- echo '* * * * * sleep 30; /usr/local/bin/tellimon-live-sync.sh >/dev/null 2>&1') | crontab -
+ echo '*/2 * * * * /usr/local/bin/tellimon-sync.sh >/dev/null 2>&1') | crontab -
+
+pm2 delete tellimon-live-sync 2>/dev/null || true
+pm2 start /usr/local/bin/tellimon-live-sync-daemon.sh --name tellimon-live-sync --interpreter bash
+pm2 save
 echo DONE
