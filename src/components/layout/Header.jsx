@@ -19,8 +19,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
   }, [])
 
   return (
-    <header className="h-16 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
-      <div className="flex items-center gap-3 min-w-0">
+    <header className="h-20 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
+      <div className="flex items-center gap-3 min-w-0 flex-1 lg:flex-none">
         <button
           type="button"
           onClick={onMenuClick}
@@ -29,8 +29,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
         >
           {sidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
         </button>
-        <div className="lg:hidden truncate">
-          <Logo size="md" variant="dark" />
+        <div className="lg:hidden flex-1 flex justify-center min-w-0">
+          <Logo size="lg" variant="dark" />
         </div>
       </div>
 
@@ -55,10 +55,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
             <div className="w-8 h-8 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center ring-2 ring-brand/40 shrink-0">
               {user?.initials || 'U'}
             </div>
-            <span className="hidden sm:inline text-sm font-medium text-gray-200 truncate max-w-[120px] md:max-w-none">
-              {user?.name}
-            </span>
-            <HiOutlineChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+            <HiOutlineChevronDown className="w-4 h-4 text-gray-500 shrink-0 hidden sm:block" />
           </button>
 
           {menuOpen && (
