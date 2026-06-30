@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import urllib.request
+import wave
 
 
 def load_config():
@@ -23,18 +24,39 @@ def load_config():
     return conf
 
 
-def resolve_recording_url(vps_ip, rec_file, unique_id):
+def resolve_recording_file(rec_file, unique_id):
     rec_dir = '/var/www/recordings'
     for name in (f'{rec_file}.wav', f'{unique_id}.wav'):
-        if name and os.path.isfile(os.path.join(rec_dir, name)):
-            return f'http://{vps_ip}/recordings/{name}'
+        if name:
+            path = os.path.join(rec_dir, name)
+            if os.path.isfile(path):
+                return path
     if unique_id:
         matches = sorted(glob.glob(os.path.join(rec_dir, f'{unique_id}*.wav')))
         if matches:
-            return f'http://{vps_ip}/recordings/{os.path.basename(matches[-1])}'
+            return matches[-1]
     if rec_file:
-        return f'http://{vps_ip}/recordings/{rec_file}.wav'
+        path = os.path.join(rec_dir, f'{rec_file}.wav')
+        if os.path.isfile(path):
+            return path
     return ''
+
+
+def wav_duration_seconds(path):
+    try:
+        with wave.open(path, 'rb') as w:
+            rate = w.getframerate()
+            if rate <= 0:
+                return 0
+            return int(round(w.getnframes() / float(rate)))
+    except (wave.Error, OSError, ValueError):
+        return 0
+
+
+def resolve_recording_url(vps_ip, rec_file, unique_id):
+    path = resolve_recording_file(rec_file, unique_id)
+    if path:
+        return f'http://{vps_ip}/recordings/{os.path.basename(path)}'
 
 
 def main():
@@ -88,6 +110,12 @@ def main():
         'uniqueId': unique_id or '',
         'recordingUrl': resolve_recording_url(vps_ip, rec_file, unique_id),
     }
+
+    rec_path = resolve_recording_file(rec_file, unique_id)
+    if rec_path:
+        wav_dur = wav_duration_seconds(rec_path)
+        if wav_dur > 0:
+            payload['duration'] = wav_dur
     if buyer_id and len(buyer_id) == 24:
         payload['buyerId'] = buyer_id
     if campaign_id and len(campaign_id) == 24:
