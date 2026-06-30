@@ -39,8 +39,8 @@ export default function Sidebar({ open, onClose }) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="px-5 pt-5 pb-4 border-b border-border-dark">
-          <Logo size="md" variant="dark" />
+        <div className="px-5 pt-5 pb-4 border-b border-border-dark flex justify-center">
+          <Logo size="lg" variant="dark" />
           <div className="mt-4 p-3 rounded-xl bg-ink-soft border border-border-dark hidden sm:block">
             <p className="text-xs text-gray-400 leading-relaxed">
               Fast access to live routing and daily operator controls.

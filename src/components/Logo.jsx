@@ -2,16 +2,18 @@ import logoImage from '../assets/logo.jpeg'
 
 export default function Logo({ size = 'md', variant = 'light', showText = false }) {
   const sizes = {
-    sm: 'h-11',
-    md: 'h-16',
-    lg: 'h-20',
-    xl: 'h-36',
+    sm: 'h-12',
+    md: 'h-20',
+    lg: 'h-28',
+    xl: 'h-40',
+    '2xl': 'h-56',
   }
   const textSizes = {
     sm: { title: 'text-sm', subtitle: 'text-[10px]' },
     md: { title: 'text-base', subtitle: 'text-[11px]' },
     lg: { title: 'text-xl', subtitle: 'text-xs' },
     xl: { title: 'text-2xl', subtitle: 'text-sm' },
+    '2xl': { title: 'text-3xl', subtitle: 'text-base' },
   }
   const isDark = variant === 'dark'
   const s = textSizes[size] ?? textSizes.md

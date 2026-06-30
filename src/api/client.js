@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://tellimon-be.vercel.app/api'
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://api.hitechpbxworld.com/api'
 
 function getToken() {
   return localStorage.getItem('tellimon_token')

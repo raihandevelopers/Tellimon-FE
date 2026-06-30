@@ -19,7 +19,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
   }, [])
 
   return (
-    <header className="h-14 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
+    <header className="h-16 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
@@ -30,7 +30,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
           {sidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
         </button>
         <div className="lg:hidden truncate">
-          <Logo size="sm" variant="dark" />
+          <Logo size="md" variant="dark" />
         </div>
       </div>
 

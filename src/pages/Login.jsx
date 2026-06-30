@@ -41,7 +41,7 @@ export default function Login() {
         </div>
         <div className="relative z-10 text-center px-12">
           <div className="flex justify-center mb-8">
-            <Logo size="xl" variant="dark" />
+            <Logo size="2xl" variant="dark" />
           </div>
           <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
             Enterprise call forwarding &amp; telephony control panel. Manage campaigns, DIDs, and live calls from one place.
@@ -66,7 +66,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-surface">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 flex justify-center">
-            <Logo size="lg" />
+            <Logo size="xl" />
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-border p-8 ring-1 ring-brand/10">
