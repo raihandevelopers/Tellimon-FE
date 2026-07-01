@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import MasterRoute from './components/MasterRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -31,7 +32,14 @@ export default function App() {
             <Route path="campaigns" element={<Campaigns />} />
             <Route path="blocked-contacts" element={<BlockedContacts />} />
             <Route path="buyers" element={<Buyers />} />
-            <Route path="did-management" element={<DIDManagement />} />
+            <Route
+              path="did-management"
+              element={
+                <MasterRoute>
+                  <DIDManagement />
+                </MasterRoute>
+              }
+            />
             <Route path="call-reports" element={<CallReports />} />
             <Route path="live-calls" element={<LiveCalls />} />
             <Route path="activity-logs" element={<ActivityLogs />} />
