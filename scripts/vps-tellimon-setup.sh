@@ -88,7 +88,7 @@ TMP=$(mktemp)
 asterisk -rx 'core show channels concise' 2>/dev/null | grep '^PJSIP' > "$TMP" || true
 python3 - "$TMP" << 'PY'
 import json, sys, os, subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 path = sys.argv[1]
 calls = []
@@ -99,7 +99,9 @@ try:
 except OSError:
     pass
 
- with open(path) as f:
+now = datetime.now(timezone.utc)
+
+with open(path) as f:
     for line in f:
         parts = line.strip().split('!')
         if len(parts) < 3:
@@ -111,13 +113,22 @@ except OSError:
             continue
         caller = parts[7] if len(parts) > 7 else ''
         did = exten
+        duration_sec = 0
+        for idx in (13, 12, 11, 10):
+            if len(parts) > idx and parts[idx]:
+                try:
+                    duration_sec = max(0, int(float(parts[idx])))
+                    break
+                except (ValueError, TypeError):
+                    continue
+        started_at = (now - timedelta(seconds=duration_sec)).isoformat()
         calls.append({
             'channelId': channel_id,
             'caller': caller,
             'did': did,
             'buyerNumber': buyer,
             'route': 'xolo-endpoint',
-            'startedAt': datetime.now(timezone.utc).isoformat(),
+            'startedAt': started_at,
         })
 
 user_id = os.environ.get('USER_ID', '')
