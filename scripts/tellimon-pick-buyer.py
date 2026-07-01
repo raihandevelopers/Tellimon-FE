@@ -28,7 +28,7 @@ def load_config():
 
 
 def active_calls_by_buyer():
-    """Count in-flight outbound legs per buyer number from Asterisk."""
+    """Count in-flight outbound legs per buyer from Asterisk."""
     counts = {}
     try:
         out = subprocess.check_output(
@@ -45,6 +45,8 @@ def active_calls_by_buyer():
         try:
             data = json.load(open(routing_path))
             for b in data.get('buyers', []):
+                if b.get('status') != 'Active':
+                    continue
                 n = digits(b.get('number', ''))
                 if n:
                     buyers_by_number[n] = str(b.get('id', ''))
@@ -52,10 +54,25 @@ def active_calls_by_buyer():
             pass
 
     for line in out.splitlines():
-        for num, bid in buyers_by_number.items():
-            if num and num in re.sub(r'[^0-9]', '', line):
-                counts[bid] = counts.get(bid, 0) + 1
-                break
+        if not line.strip() or '!' not in line:
+            continue
+        parts = line.split('!')
+        channel = parts[0]
+        exten = parts[2] if len(parts) > 2 else ''
+        # Only count outbound legs to buyers — avoid false matches on inbound/DID lines.
+        if 'xolo-endpoint' not in channel.lower():
+            continue
+        exten_d = digits(exten)
+        if not exten_d:
+            m = re.search(r'/(\d{10,15})', channel)
+            if m:
+                exten_d = digits(m.group(1))
+        if not exten_d:
+            continue
+        bid = buyers_by_number.get(exten_d)
+        if bid:
+            counts[bid] = counts.get(bid, 0) + 1
+
     return counts
 
 
@@ -102,9 +119,9 @@ def local_fallback(did, caller):
     campaign = campaigns.get(did_rec.get('campaignId')) if did_rec else None
     pool = buyers
     if campaign and campaign.get('active', True):
-        ids = set(campaign.get('buyerIds') or [])
+        ids = {str(x) for x in (campaign.get('buyerIds') or [])}
         if ids:
-            pool = [b for b in buyers if b['id'] in ids]
+            pool = [b for b in buyers if str(b.get('id', '')) in ids]
 
     pool = [b for b in pool if eligible(b)]
     if not pool:
@@ -113,11 +130,11 @@ def local_fallback(did, caller):
     dup = (campaign or {}).get('duplicateHandling', 'Normal')
     last_id = last_buyer.get(caller_d)
     if last_id and dup == 'Same Buyer':
-        same = next((b for b in pool if b['id'] == last_id), None)
+        same = next((b for b in pool if str(b.get('id', '')) == str(last_id)), None)
         if same:
             pool = [same]
     elif last_id and dup == 'Different Buyer':
-        alt = [b for b in pool if b['id'] != last_id]
+        alt = [b for b in pool if str(b.get('id', '')) != str(last_id)]
         if alt:
             pool = alt
 
@@ -125,11 +142,13 @@ def local_fallback(did, caller):
     if strategy == 'Sticky':
         sid = sticky.get(caller_d)
         if sid:
-            hit = next((b for b in pool if b['id'] == sid), None)
+            hit = next((b for b in pool if str(b.get('id', '')) == str(sid)), None)
             if hit:
                 pool = [hit]
-
-    if strategy == 'Random':
+        if not pool:
+            return None
+        pick = sorted(pool, key=lambda b: int(b.get('priority') or 0), reverse=True)[0]
+    elif strategy == 'Random':
         import random
         pick = random.choice(pool)
     elif strategy == 'Round Robin':
