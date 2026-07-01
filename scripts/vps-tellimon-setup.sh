@@ -192,7 +192,7 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,ExecIf($["${BILLSEC}"=""]?Set(BILLSEC=${DURATION}))
  same => n,ExecIf($["${CALLER}"=""]?Set(CALLER=unknown))
  same => n,ExecIf($["${CAMPAIGN_ID}"=""]?Set(CAMPAIGN_ID=none))
- same => n,System(/usr/local/bin/tellimon-post-call.sh ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE})
+ same => n,System(/usr/local/bin/tellimon-post-call.sh ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE} ${START} ${END})
  same => n,Hangup()
 
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)

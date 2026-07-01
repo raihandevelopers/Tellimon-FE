@@ -7,6 +7,7 @@ import re
 import sys
 import urllib.request
 import wave
+from datetime import datetime, timezone
 
 
 def load_config():
@@ -71,6 +72,8 @@ def main():
         args.append('')
 
     caller, did, buyer, buyer_id, campaign_id, status, duration, billsec, unique_id, rec_file = args[:10]
+    start_epoch = args[10] if len(args) > 10 else ''
+    end_epoch = args[11] if len(args) > 11 else ''
 
     if campaign_id in ('', 'none', '-', 'null'):
         campaign_id = ''
@@ -120,6 +123,22 @@ def main():
         payload['buyerId'] = buyer_id
     if campaign_id and len(campaign_id) == 24:
         payload['campaignId'] = campaign_id
+
+    def epoch_to_iso(value):
+        try:
+            ts = int(value)
+            if ts <= 0:
+                return None
+            return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace('+00:00', 'Z')
+        except (TypeError, ValueError):
+            return None
+
+    started = epoch_to_iso(start_epoch)
+    ended = epoch_to_iso(end_epoch)
+    if started:
+        payload['startedAt'] = started
+    if ended:
+        payload['endedAt'] = ended
 
     data = json.dumps(payload).encode()
     req = urllib.request.Request(

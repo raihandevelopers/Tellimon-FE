@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { HiOutlinePlay, HiOutlineDownload } from 'react-icons/hi'
+import { HiOutlinePlay, HiOutlineDownload, HiOutlineDocumentDownload } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import Pagination from '../components/ui/Pagination'
 import InfoBanner from '../components/ui/InfoBanner'
+import PrimaryButton from '../components/ui/PrimaryButton'
 import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
+import { downloadCdrExcel } from '../utils/exportCdr'
 
 const statusStyles = {
   answered: 'bg-brand-light text-brand-dark border border-brand/20',
@@ -29,6 +31,7 @@ export default function CallReports() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [recordingLoading, setRecordingLoading] = useState(null)
+  const [exporting, setExporting] = useState(false)
   const [player, setPlayer] = useState({ open: false, call: null, url: '', filename: '' })
   const playerUrlRef = useRef('')
 
@@ -121,6 +124,43 @@ export default function CallReports() {
     )
   })
 
+  const matchesSearch = (call) => {
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    return (
+      call.caller?.toLowerCase().includes(q) ||
+      call.did?.toLowerCase().includes(q) ||
+      call.buyerNumber?.toLowerCase().includes(q)
+    )
+  }
+
+  const exportToExcel = async () => {
+    setExporting(true)
+    try {
+      const allCalls = []
+      let pageNum = 1
+      let totalPages = 1
+      do {
+        const res = await api.getCalls({ page: pageNum, limit: 500 })
+        allCalls.push(...(res.calls || []))
+        totalPages = res.totalPages || 1
+        pageNum += 1
+      } while (pageNum <= totalPages)
+
+      const rows = allCalls.filter(matchesSearch)
+      if (rows.length === 0) {
+        alert('No call records to export.')
+        return
+      }
+      downloadCdrExcel(rows)
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Could not export call reports')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <InfoBanner>
@@ -130,18 +170,27 @@ export default function CallReports() {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Call duration, status, and recordings from Asterisk
+          Call duration, status, and recordings from Asterisk. Times shown in India Standard Time (IST).
         </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
-        <div className="p-5">
+        <div className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchInput
             placeholder="Search by caller, DID, or buyer number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-md"
+            className="max-w-md w-full"
           />
+          <PrimaryButton
+            type="button"
+            onClick={exportToExcel}
+            disabled={exporting || loading}
+            className="shrink-0"
+          >
+            <HiOutlineDocumentDownload className="w-5 h-5" />
+            {exporting ? 'Exporting…' : 'Export to Excel'}
+          </PrimaryButton>
         </div>
 
         <div className="overflow-x-auto">
