@@ -4,6 +4,7 @@ import PrimaryButton from '../components/ui/PrimaryButton'
 import EmptyState from '../components/ui/EmptyState'
 import InfoBanner from '../components/ui/InfoBanner'
 import { api } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 function formatDidDisplay(number) {
   const d = String(number).replace(/\D/g, '')
@@ -14,13 +15,21 @@ function formatDidDisplay(number) {
 }
 
 export default function DIDManagement() {
+  const { isMaster } = useAuth()
   const [dids, setDids] = useState([])
   const [campaigns, setCampaigns] = useState([])
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editDid, setEditDid] = useState(null)
-  const [form, setForm] = useState({ number: '', trunk: '8138073157', campaignId: '', buyerId: '', status: 'Active' })
+  const [form, setForm] = useState({
+    number: '',
+    trunk: '8138073157',
+    campaignId: '',
+    buyerId: '',
+    status: 'Active',
+    isMain: false,
+  })
   const [error, setError] = useState('')
 
   const load = async () => {
@@ -56,10 +65,18 @@ export default function DIDManagement() {
         campaignId: form.campaignId || undefined,
         buyerId: form.buyerId || undefined,
         status: form.status,
+        isMain: isMaster ? form.isMain : undefined,
       })
       setDids((prev) => [created, ...prev])
       setModalOpen(false)
-      setForm({ number: '', trunk: '8138073157', campaignId: '', buyerId: '', status: 'Active' })
+      setForm({
+        number: '',
+        trunk: '8138073157',
+        campaignId: '',
+        buyerId: '',
+        status: 'Active',
+        isMain: false,
+      })
       load()
     } catch (err) {
       setError(err.message || 'Failed to add DID')
@@ -79,6 +96,7 @@ export default function DIDManagement() {
       campaignId: did.campaignId || '',
       buyerId: did.buyerId || '',
       status: did.status || 'Active',
+      isMain: Boolean(did.isMain),
     })
   }
 
@@ -91,6 +109,7 @@ export default function DIDManagement() {
         campaignId: form.campaignId || null,
         buyerId: form.buyerId || null,
         status: form.status,
+        isMain: isMaster ? form.isMain : undefined,
       })
       setEditDid(null)
       load()
@@ -150,7 +169,16 @@ export default function DIDManagement() {
             ) : (
               dids.map((did) => (
                 <tr key={did.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-5 py-3.5 font-medium text-gray-900">{formatDidDisplay(did.number)}</td>
+                  <td className="px-5 py-3.5 font-medium text-gray-900">
+                    <div className="flex items-center gap-2">
+                      <span>{formatDidDisplay(did.number)}</span>
+                      {did.isMain && isMaster && (
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">
+                          Main
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3.5">
                     <span
                       className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -254,6 +282,17 @@ export default function DIDManagement() {
                   className="w-full px-4 py-2.5 text-sm border border-border rounded-xl font-mono"
                 />
               </div>
+              {isMaster && (
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={form.isMain}
+                    onChange={(e) => setForm({ ...form, isMain: e.target.checked })}
+                    className="rounded border-border"
+                  />
+                  Main DID (hidden from customer accounts)
+                </label>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border rounded-xl">
                   Cancel
@@ -331,6 +370,17 @@ export default function DIDManagement() {
                   className="w-full px-4 py-2.5 text-sm border border-border rounded-xl font-mono"
                 />
               </div>
+              {isMaster && (
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={form.isMain}
+                    onChange={(e) => setForm({ ...form, isMain: e.target.checked })}
+                    className="rounded border-border"
+                  />
+                  Main DID (hidden from customer accounts)
+                </label>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setEditDid(null)} className="px-4 py-2 text-sm border rounded-xl">
                   Cancel
