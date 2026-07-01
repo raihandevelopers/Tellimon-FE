@@ -3,6 +3,7 @@ import { HiOutlinePhone } from 'react-icons/hi'
 import InfoBanner from '../components/ui/InfoBanner'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
+import { dedupeLiveCalls } from '../utils/dedupeLiveCalls'
 
 function formatDidDisplay(number) {
   const d = String(number || '').replace(/\D/g, '')
@@ -28,7 +29,7 @@ export default function LiveCalls() {
   const load = async () => {
     try {
       const res = await api.getLiveCalls()
-      setCalls(res.calls || [])
+      setCalls(dedupeLiveCalls(res.calls || []))
     } catch (err) {
       console.error(err)
       setCalls([])

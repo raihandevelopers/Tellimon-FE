@@ -107,10 +107,10 @@ except OSError:
         channel_id, context, exten = parts[0], parts[1], parts[2]
         if 'PJSIP' not in channel_id:
             continue
-        if context != 'from-trunk' and 'xolo-endpoint' not in channel_id:
+        if context != 'from-trunk':
             continue
         caller = parts[7] if len(parts) > 7 else ''
-        did = exten if context == 'from-trunk' else (parts[2] if len(parts) > 2 else '')
+        did = exten
         calls.append({
             'channelId': channel_id,
             'caller': caller,

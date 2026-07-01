@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 install -m 755 "$SCRIPT_DIR/tellimon-call-webhook.py" /usr/local/bin/tellimon-call-webhook.py
 install -m 755 "$SCRIPT_DIR/tellimon-post-call.sh" /usr/local/bin/tellimon-post-call.sh
 install -m 755 "$SCRIPT_DIR/tellimon-live-sync-daemon.sh" /usr/local/bin/tellimon-live-sync-daemon.sh
+install -m 755 "$SCRIPT_DIR/tellimon-live-sync.sh" /usr/local/bin/tellimon-live-sync.sh
 touch /var/log/tellimon-webhook.log
 chmod 666 /var/log/tellimon-webhook.log
 

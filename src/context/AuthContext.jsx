@@ -3,6 +3,27 @@ import { api, setToken } from '../api/client'
 
 const AuthContext = createContext(null)
 
+function tokenUserId(token) {
+  try {
+    const payload = token.split('.')[1]
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(json).userId || null
+  } catch {
+    return null
+  }
+}
+
+function cachedUserForToken(token) {
+  const expectedId = tokenUserId(token)
+  if (!expectedId) return null
+  try {
+    const cached = JSON.parse(localStorage.getItem('tellimon_user') || 'null')
+    return cached?.id === expectedId ? cached : null
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -16,7 +37,15 @@ export function AuthProvider({ children }) {
       }
       try {
         const { user: u } = await api.me()
-        setUser(u)
+        const expectedId = tokenUserId(token)
+        if (expectedId && u.id === expectedId) {
+          setUser(u)
+          localStorage.setItem('tellimon_user', JSON.stringify(u))
+        } else {
+          const cached = cachedUserForToken(token)
+          if (cached) setUser(cached)
+          else throw new Error('Session user mismatch')
+        }
       } catch {
         setToken(null)
         localStorage.removeItem('tellimon_user')

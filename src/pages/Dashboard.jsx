@@ -12,6 +12,7 @@ import {
 import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
+import { dedupeLiveCalls } from '../utils/dedupeLiveCalls'
 
 function formatDidDisplay(number) {
   const d = String(number || '').replace(/\D/g, '')
@@ -53,7 +54,7 @@ export default function Dashboard() {
   const loadLiveCalls = async () => {
     try {
       const res = await api.getLiveCalls()
-      setLiveCalls(res.calls || [])
+      setLiveCalls(dedupeLiveCalls(res.calls || []))
       setConnected(true)
     } catch {
       setLiveCalls([])
