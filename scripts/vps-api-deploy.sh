@@ -10,6 +10,7 @@ USER_ID="${USER_ID:-6a2499728387de0796ce6f3c}"
 
 export DEBIAN_FRONTEND=noninteractive
 
+
 apt-get update -qq
 apt-get install -y -qq curl git ca-certificates gnupg certbot python3-certbot-nginx
 
@@ -67,6 +68,7 @@ ln -sf /etc/nginx/sites-available/tellimon-api /etc/nginx/sites-enabled/tellimon
 nginx -t
 systemctl reload nginx
 
+ufw allow 22/tcp 2>/dev/null || true
 ufw allow 443/tcp 2>/dev/null || true
 
 certbot --nginx -d "$API_DOMAIN" --non-interactive --agree-tos --register-unsafely-without-email --redirect || \

@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import Logo from '../Logo'
+import { useAuth } from '../../context/AuthContext'
 import { navItemsForRole } from '../../config/navItems'
 
 export default function Sidebar({ open, onClose }) {
-  const items = navItemsForRole(true)
+  const { isMaster } = useAuth()
+  const items = navItemsForRole(isMaster)
 
   return (
     <>
