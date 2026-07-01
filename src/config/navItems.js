@@ -7,6 +7,7 @@ import {
   HiOutlineChartBar,
   HiOutlineStatusOnline,
   HiOutlineClipboardList,
+  HiOutlineUsers,
 } from 'react-icons/hi'
 
 export const navItems = [
@@ -14,6 +15,7 @@ export const navItems = [
   { to: '/campaigns', label: 'Campaigns', icon: HiOutlineSpeakerphone },
   { to: '/blocked-contacts', label: 'Blocked Contacts', icon: HiOutlineBan },
   { to: '/buyers', label: 'Buyers', icon: HiOutlineUserGroup },
+  { to: '/customers', label: 'Customers', icon: HiOutlineUsers, masterOnly: true },
   { to: '/did-management', label: 'DID Management', icon: HiOutlinePhone, masterOnly: true },
   { to: '/call-reports', label: 'Call Reports', icon: HiOutlineChartBar },
   { to: '/live-calls', label: 'Live Calls', icon: HiOutlineStatusOnline },

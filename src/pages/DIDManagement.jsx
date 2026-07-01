@@ -19,6 +19,7 @@ export default function DIDManagement() {
   const [dids, setDids] = useState([])
   const [campaigns, setCampaigns] = useState([])
   const [buyers, setBuyers] = useState([])
+  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editDid, setEditDid] = useState(null)
@@ -29,20 +30,23 @@ export default function DIDManagement() {
     buyerId: '',
     status: 'Active',
     isMain: false,
+    assignedCustomerId: '',
   })
   const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
     try {
-      const [didList, campaignList, buyerList] = await Promise.all([
+      const [didList, campaignList, buyerList, customerList] = await Promise.all([
         api.getDIDs(),
         api.getCampaigns(),
         api.getBuyers(),
+        api.getCustomers(),
       ])
       setDids(didList)
       setCampaigns(campaignList)
       setBuyers(buyerList)
+      setCustomers(customerList)
     } catch (err) {
       console.error(err)
       setError(err.message || 'Failed to load DIDs')
@@ -66,6 +70,7 @@ export default function DIDManagement() {
         buyerId: form.buyerId || undefined,
         status: form.status,
         isMain: isMaster ? form.isMain : undefined,
+        assignedCustomerId: form.assignedCustomerId || null,
       })
       setDids((prev) => [created, ...prev])
       setModalOpen(false)
@@ -76,6 +81,7 @@ export default function DIDManagement() {
         buyerId: '',
         status: 'Active',
         isMain: false,
+        assignedCustomerId: '',
       })
       load()
     } catch (err) {
@@ -97,6 +103,7 @@ export default function DIDManagement() {
       buyerId: did.buyerId || '',
       status: did.status || 'Active',
       isMain: Boolean(did.isMain),
+      assignedCustomerId: did.assignedCustomerId || '',
     })
   }
 
@@ -110,6 +117,7 @@ export default function DIDManagement() {
         buyerId: form.buyerId || null,
         status: form.status,
         isMain: isMaster ? form.isMain : undefined,
+        assignedCustomerId: form.assignedCustomerId || null,
       })
       setEditDid(null)
       load()
@@ -147,6 +155,7 @@ export default function DIDManagement() {
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">DID Number</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer</th>
+              <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Customer</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Campaign</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asterisk Trunk</th>
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Calls Today</th>
@@ -156,13 +165,13 @@ export default function DIDManagement() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">
+                <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-400">
                   Loading DIDs…
                 </td>
               </tr>
             ) : dids.length === 0 ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={8}>
                   <EmptyState message="No DIDs configured yet." />
                 </td>
               </tr>
@@ -191,6 +200,7 @@ export default function DIDManagement() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">{did.buyerName || '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{did.customerName || '—'}</td>
                   <td className="px-5 py-3.5 text-gray-600">{did.campaignName || 'Default'}</td>
                   <td className="px-5 py-3.5 text-gray-600 font-mono text-xs">{did.trunk}</td>
                   <td className="px-5 py-3.5 text-gray-600">{did.callsToday ?? 0}</td>
@@ -274,6 +284,23 @@ export default function DIDManagement() {
                   ))}
                 </select>
               </div>
+              {!form.isMain && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to customer</label>
+                  <select
+                    value={form.assignedCustomerId}
+                    onChange={(e) => setForm({ ...form, assignedCustomerId: e.target.value })}
+                    className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                  >
+                    <option value="">No customer (master only)</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">SIP Trunk</label>
                 <input
@@ -287,7 +314,9 @@ export default function DIDManagement() {
                   <input
                     type="checkbox"
                     checked={form.isMain}
-                    onChange={(e) => setForm({ ...form, isMain: e.target.checked })}
+                    onChange={(e) =>
+                      setForm({ ...form, isMain: e.target.checked, assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId })
+                    }
                     className="rounded border-border"
                   />
                   Main DID (hidden from customer accounts)
@@ -351,6 +380,23 @@ export default function DIDManagement() {
                   ))}
                 </select>
               </div>
+              {!form.isMain && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to customer</label>
+                  <select
+                    value={form.assignedCustomerId}
+                    onChange={(e) => setForm({ ...form, assignedCustomerId: e.target.value })}
+                    className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
+                  >
+                    <option value="">No customer (master only)</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
                 <select
@@ -375,7 +421,9 @@ export default function DIDManagement() {
                   <input
                     type="checkbox"
                     checked={form.isMain}
-                    onChange={(e) => setForm({ ...form, isMain: e.target.checked })}
+                    onChange={(e) =>
+                      setForm({ ...form, isMain: e.target.checked, assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId })
+                    }
                     className="rounded border-border"
                   />
                   Main DID (hidden from customer accounts)

@@ -58,6 +58,11 @@ export const api = {
   updateDID: (id, body) => request(`/dids/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteDID: (id) => request(`/dids/${id}`, { method: 'DELETE' }),
 
+  getCustomers: () => request('/customers'),
+  createCustomer: (body) => request('/customers', { method: 'POST', body: JSON.stringify(body) }),
+  updateCustomer: (id, body) => request(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCustomer: (id) => request(`/customers/${id}`, { method: 'DELETE' }),
+
   getDashboardStats: () => request('/dashboard/stats'),
 
   getCalls: (params = {}) => {
