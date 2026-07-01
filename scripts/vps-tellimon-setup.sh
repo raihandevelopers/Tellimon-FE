@@ -156,12 +156,32 @@ VPS_IP=91.108.104.221
 CFGEOF
 
 cat > /etc/asterisk/extensions.d/tellimon.conf <<'DIALEOF'
-; Tellimon inbound forwarding
+; Tellimon inbound forwarding — CDR posts on normal completion and on hangup (h)
 [globals]
 TELLIMON_USER=6a2499728387de0796ce6f3c
 TELLIMON_WEBHOOK=https://tellimon-be.vercel.app/api/calls/webhook
 TELLIMON_WEBHOOK_SECRET=__WEBHOOK_SECRET__
 VPS_IP=91.108.104.221
+
+[tellimon-post-cdr]
+exten => s,1,NoOp(Tellimon post CDR)
+ same => n,GotoIf($["${CDR_POSTED}"="1"]?done,1)
+ same => n,GotoIf($["${BUYER}"=""]?done,1)
+ same => n,ExecIf($["${END}"=""]?Set(END=${EPOCH}))
+ same => n,ExecIf($["${START}"=""]?Set(START=${EPOCH}))
+ same => n,ExecIf($["${DURATION}"=""]?Set(DURATION=$[${END}-${START}]))
+ same => n,ExecIf($["${CALL_STATUS}"=""]?Set(CALL_STATUS=missed))
+ same => n,ExecIf($["${DIALSTATUS}"="ANSWER"]?Set(CALL_STATUS=answered))
+ same => n,ExecIf($["${DIALSTATUS}"="BUSY"]?Set(CALL_STATUS=busy))
+ same => n,ExecIf($["${DIALSTATUS}"="NOANSWER"]?Set(CALL_STATUS=no-answer))
+ same => n,Set(BILLSEC=${CDR(billsec)})
+ same => n,ExecIf($["${BILLSEC}"=""]?Set(BILLSEC=${DURATION}))
+ same => n,ExecIf($["${CALLER}"=""]?Set(CALLER=unknown))
+ same => n,ExecIf($["${CAMPAIGN_ID}"=""]?Set(CAMPAIGN_ID=none))
+ same => n,ExecIf($["${REC_FILE}"=""]?Set(REC_FILE=${UNIQUEID}))
+ same => n,System(/usr/local/bin/tellimon-post-call.sh ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE} ${START} ${END})
+ same => n,Set(CDR_POSTED=1)
+ same => n(done),Return()
 
 [from-trunk]
 exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
@@ -188,12 +208,10 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,ExecIf($["${DIALSTATUS}"="BUSY"]?Set(CALL_STATUS=busy))
  same => n,ExecIf($["${DIALSTATUS}"="NOANSWER"]?Set(CALL_STATUS=no-answer))
  same => n,ExecIf($["${CALL_STATUS}"=""]?Set(CALL_STATUS=missed))
- same => n,Set(BILLSEC=${CDR(billsec)})
- same => n,ExecIf($["${BILLSEC}"=""]?Set(BILLSEC=${DURATION}))
- same => n,ExecIf($["${CALLER}"=""]?Set(CALLER=unknown))
- same => n,ExecIf($["${CAMPAIGN_ID}"=""]?Set(CAMPAIGN_ID=none))
- same => n,System(/usr/local/bin/tellimon-post-call.sh ${CALLER} ${DID} ${BUYER} ${BUYER_ID} ${CAMPAIGN_ID} ${CALL_STATUS} ${DURATION} ${BILLSEC} ${UNIQUEID} ${REC_FILE} ${START} ${END})
+ same => n,Gosub(tellimon-post-cdr,s,1)
  same => n,Hangup()
+
+exten => h,1,Gosub(tellimon-post-cdr,s,1)
 
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)
  same => n,Playback(ss-noservice)
