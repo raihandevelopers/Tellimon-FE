@@ -9,6 +9,7 @@ import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
 import { downloadCdrExcel } from '../utils/exportCdr'
+import { useAuth } from '../context/AuthContext'
 
 const statusStyles = {
   answered: 'bg-brand-light text-brand-dark border border-brand/20',
@@ -24,7 +25,17 @@ function recordingFilename(url) {
   return name?.endsWith('.wav') ? name : null
 }
 
+function formatDidDisplay(number) {
+  const d = String(number || '').replace(/\D/g, '')
+  if (d.length === 11 && d.startsWith('1')) {
+    return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
+  }
+  return number || '—'
+}
+
 export default function CallReports() {
+  const { isMaster } = useAuth()
+  const [assignedDids, setAssignedDids] = useState([])
   const [data, setData] = useState({ calls: [], total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -114,6 +125,13 @@ export default function CallReports() {
     loadCalls()
   }, [page, perPage])
 
+  useEffect(() => {
+    if (isMaster) return
+    api.getDIDs()
+      .then((dids) => setAssignedDids(dids || []))
+      .catch(() => setAssignedDids([]))
+  }, [isMaster])
+
   const filtered = data.calls.filter((c) => {
     const q = search.trim().toLowerCase()
     if (!q) return true
@@ -164,13 +182,24 @@ export default function CallReports() {
   return (
     <div className="space-y-6">
       <InfoBanner>
-        Click Play to open the built-in recorder. Audio streams over HTTPS — no mixed-content issues.
+        {isMaster ? (
+          <>Click Play to open the built-in recorder. Audio streams over HTTPS — no mixed-content issues.</>
+        ) : assignedDids.length > 0 ? (
+          <>
+            Showing calls for your assigned DID{assignedDids.length > 1 ? 's' : ''}:{' '}
+            <strong>{assignedDids.map((d) => formatDidDisplay(d.number)).join(', ')}</strong>
+          </>
+        ) : (
+          <>No DID assigned to your account yet. Ask your administrator to assign a number.</>
+        )}
       </InfoBanner>
 
       <div>
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Call duration, status, and recordings from Asterisk. Times shown in India Standard Time (IST).
+          {isMaster
+            ? 'Call duration, status, and recordings from Asterisk. Times shown in India Standard Time (IST).'
+            : 'Calls on your assigned DID only. Times shown in India Standard Time (IST).'}
         </p>
       </div>
 
