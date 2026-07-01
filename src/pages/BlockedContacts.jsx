@@ -67,7 +67,7 @@ export default function BlockedContacts() {
   return (
     <>
       <InfoBanner>
-        Blocked numbers are synced to Asterisk every ~2 min. Matching callers are rejected before forward.
+        Blocked numbers sync to Asterisk immediately. Matching callers are rejected before forward.
       </InfoBanner>
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
       <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
