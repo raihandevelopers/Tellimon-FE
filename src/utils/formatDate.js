@@ -1,7 +1,7 @@
 const IST = 'Asia/Kolkata'
 
 /** Parse API/Mongo ISO timestamps as UTC when no offset is present. */
-function parseApiDate(iso) {
+export function parseApiDate(iso) {
   if (!iso) return null
   const s = String(iso).trim()
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) && !/[Zz]|[+-]\d{2}:\d{2}$/.test(s)) {
