@@ -6,6 +6,7 @@ import Pagination from '../components/ui/Pagination'
 import InfoBanner from '../components/ui/InfoBanner'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
+import ExportCdrModal from '../components/calls/ExportCdrModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
 import { downloadCdrExcel } from '../utils/exportCdr'
@@ -60,6 +61,7 @@ export default function CallReports() {
   const [numberQuery, setNumberQuery] = useState('')
   const [recordingLoading, setRecordingLoading] = useState(null)
   const [exporting, setExporting] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const [player, setPlayer] = useState({ open: false, call: null, url: '', filename: '' })
   const playerUrlRef = useRef('')
 
@@ -194,13 +196,18 @@ export default function CallReports() {
 
   const hasFilters = Boolean(month || dateFrom || dateTo || numberFilter.trim())
 
-  const exportToExcel = async () => {
+  const tableFilters = {
+    dateFrom,
+    dateTo,
+    number: numberQuery,
+  }
+
+  const runExport = async ({ query, filenameParts }) => {
     setExporting(true)
     try {
       const allCalls = []
       let pageNum = 1
       let totalPages = 1
-      const query = filterParams()
       do {
         const res = await api.getCalls({ ...query, page: pageNum, limit: 500 })
         allCalls.push(...(res.calls || []))
@@ -209,10 +216,11 @@ export default function CallReports() {
       } while (pageNum <= totalPages)
 
       if (allCalls.length === 0) {
-        alert('No call records match your filters.')
+        alert('No call records match your export selection.')
         return
       }
-      downloadCdrExcel(allCalls, exportFilename({ dateFrom, dateTo, number: numberQuery }))
+      downloadCdrExcel(allCalls, exportFilename(filenameParts))
+      setExportOpen(false)
     } catch (err) {
       console.error(err)
       alert(err.message || 'Could not export call reports')
@@ -312,12 +320,12 @@ export default function CallReports() {
               )}
               <PrimaryButton
                 type="button"
-                onClick={exportToExcel}
+                onClick={() => setExportOpen(true)}
                 disabled={exporting || loading}
                 className="shrink-0"
               >
                 <HiOutlineDocumentDownload className="w-5 h-5" />
-                {exporting ? 'Exporting…' : 'Export to Excel'}
+                Export to Excel
               </PrimaryButton>
             </div>
           </div>
@@ -424,6 +432,15 @@ export default function CallReports() {
         audioUrl={player.url}
         filename={player.filename}
         onDownload={downloadFromPlayer}
+      />
+
+      <ExportCdrModal
+        open={exportOpen}
+        onClose={() => !exporting && setExportOpen(false)}
+        onExport={runExport}
+        exporting={exporting}
+        tableFilters={tableFilters}
+        hasTableFilters={hasFilters}
       />
     </div>
   )

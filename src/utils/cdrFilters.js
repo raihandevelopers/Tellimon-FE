@@ -36,3 +36,61 @@ export function exportFilename({ dateFrom, dateTo, number }) {
   }
   return `${parts.join('-')}.csv`
 }
+
+/** Map export modal choice to API query params. */
+export function resolveExportQuery(mode, options = {}) {
+  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '' } = options
+
+  if (mode === 'all') {
+    return buildCallQuery({ number })
+  }
+  if (mode === 'current') {
+    return buildCallQuery(tableFilters)
+  }
+  if (mode === 'month') {
+    const range = monthToDateRange(month)
+    return buildCallQuery({ dateFrom: range.from, dateTo: range.to, number })
+  }
+  if (mode === 'range') {
+    return buildCallQuery({ dateFrom, dateTo, number })
+  }
+  return {}
+}
+
+export function describeExportScope(mode, options = {}) {
+  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '' } = options
+  const parts = []
+
+  if (mode === 'all') {
+    parts.push('All call records')
+  } else if (mode === 'current') {
+    parts.push('Current table filters')
+    if (tableFilters.dateFrom || tableFilters.dateTo) {
+      parts.push(`${tableFilters.dateFrom || '…'} to ${tableFilters.dateTo || '…'}`)
+    }
+    if (tableFilters.number?.trim()) parts.push(`number: ${tableFilters.number.trim()}`)
+  } else if (mode === 'month') {
+    if (month) {
+      const [y, m] = month.split('-')
+      const label = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('en-IN', {
+        month: 'long',
+        year: 'numeric',
+      })
+      parts.push(`Month: ${label}`)
+    } else {
+      parts.push('Select a month')
+    }
+  } else if (mode === 'range') {
+    if (dateFrom || dateTo) {
+      parts.push(`${dateFrom || '…'} to ${dateTo || '…'}`)
+    } else {
+      parts.push('Select from and to dates')
+    }
+  }
+
+  if (mode !== 'current' && number?.trim()) {
+    parts.push(`number: ${number.trim()}`)
+  }
+
+  return parts.join(' · ')
+}
