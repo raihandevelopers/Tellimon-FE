@@ -12,6 +12,14 @@ const emptyForm = {
 const strategies = ['Sticky', 'Round Robin', 'Priority', 'Random']
 const duplicateOptions = ['Normal', 'Different Buyer', 'Same Buyer']
 
+function formatPhoneNumber(number) {
+  const d = String(number || '').replace(/\D/g, '')
+  if (d.length === 11 && d.startsWith('1')) {
+    return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
+  }
+  return number || '—'
+}
+
 function FormRow({ label, required, children }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-2 sm:gap-6 items-start sm:items-center py-3 border-b border-border last:border-b-0">
@@ -124,17 +132,29 @@ export default function CampaignFormModal({
                 activeBuyers.map((b) => (
                   <label
                     key={b.id}
-                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                    className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer py-1"
                   >
                     <input
                       type="checkbox"
                       checked={selectedBuyers.includes(b.id)}
                       onChange={() => toggleBuyer(b.id)}
-                      className="rounded border-border text-brand focus:ring-brand/20"
+                      className="rounded border-border text-brand focus:ring-brand/20 mt-0.5"
                     />
-                    <span>
-                      {b.name || b.number}{' '}
-                      <span className="text-gray-400 font-mono text-xs">P{b.priority}</span>
+                    <span className="min-w-0">
+                      {b.name ? (
+                        <>
+                          <span className="font-medium text-gray-900">{b.name}</span>
+                          <span className="block font-mono text-xs text-gray-600 mt-0.5">
+                            {formatPhoneNumber(b.number)}
+                            <span className="text-gray-400 ml-2">P{b.priority}</span>
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-mono text-gray-700">
+                          {formatPhoneNumber(b.number)}
+                          <span className="text-gray-400 text-xs ml-2">P{b.priority}</span>
+                        </span>
+                      )}
                     </span>
                   </label>
                 ))
