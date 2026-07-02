@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { HiOutlinePlay, HiOutlineDownload, HiOutlineDocumentDownload } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
@@ -9,6 +9,7 @@ import RecordingPlayerModal from '../components/calls/RecordingPlayerModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
 import { downloadCdrExcel } from '../utils/exportCdr'
+import { buildCallQuery, exportFilename, monthToDateRange } from '../utils/cdrFilters'
 import { useAuth } from '../context/AuthContext'
 
 const statusStyles = {
@@ -18,6 +19,9 @@ const statusStyles = {
   failed: 'bg-ink-muted text-gray-500',
   'no-answer': 'bg-ink-soft text-gray-500',
 }
+
+const filterInputClass =
+  'w-full px-3 py-2 text-sm border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand'
 
 function recordingFilename(url) {
   if (!url) return null
@@ -33,18 +37,36 @@ function formatDidDisplay(number) {
   return number || '—'
 }
 
+function FilterField({ label, children }) {
+  return (
+    <label className="flex flex-col gap-1 min-w-0">
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      {children}
+    </label>
+  )
+}
+
 export default function CallReports() {
   const { isMaster } = useAuth()
   const [assignedDids, setAssignedDids] = useState([])
   const [data, setData] = useState({ calls: [], total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [month, setMonth] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [numberFilter, setNumberFilter] = useState('')
+  const [numberQuery, setNumberQuery] = useState('')
   const [recordingLoading, setRecordingLoading] = useState(null)
   const [exporting, setExporting] = useState(false)
   const [player, setPlayer] = useState({ open: false, call: null, url: '', filename: '' })
   const playerUrlRef = useRef('')
+
+  const filterParams = useCallback(
+    () => buildCallQuery({ dateFrom, dateTo, number: numberQuery }),
+    [dateFrom, dateTo, numberQuery]
+  )
 
   const revokePlayerUrl = () => {
     if (playerUrlRef.current) {
@@ -109,21 +131,30 @@ export default function CallReports() {
 
   useEffect(() => () => revokePlayerUrl(), [])
 
-  const loadCalls = async () => {
+  useEffect(() => {
+    const timer = setTimeout(() => setNumberQuery(numberFilter), 400)
+    return () => clearTimeout(timer)
+  }, [numberFilter])
+
+  const loadCalls = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await api.getCalls({ page, limit: perPage })
+      const res = await api.getCalls({
+        ...filterParams(),
+        page,
+        limit: perPage,
+      })
       setData(res)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [filterParams, page, perPage])
 
   useEffect(() => {
     loadCalls()
-  }, [page, perPage])
+  }, [loadCalls])
 
   useEffect(() => {
     if (isMaster) return
@@ -132,25 +163,36 @@ export default function CallReports() {
       .catch(() => setAssignedDids([]))
   }, [isMaster])
 
-  const filtered = data.calls.filter((c) => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    return (
-      c.caller?.toLowerCase().includes(q) ||
-      c.did?.toLowerCase().includes(q) ||
-      c.buyerNumber?.toLowerCase().includes(q)
-    )
-  })
-
-  const matchesSearch = (call) => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    return (
-      call.caller?.toLowerCase().includes(q) ||
-      call.did?.toLowerCase().includes(q) ||
-      call.buyerNumber?.toLowerCase().includes(q)
-    )
+  const handleMonthChange = (value) => {
+    setMonth(value)
+    if (!value) return
+    const { from, to } = monthToDateRange(value)
+    setDateFrom(from)
+    setDateTo(to)
+    setPage(1)
   }
+
+  const handleDateFromChange = (value) => {
+    setMonth('')
+    setDateFrom(value)
+    setPage(1)
+  }
+
+  const handleDateToChange = (value) => {
+    setMonth('')
+    setDateTo(value)
+    setPage(1)
+  }
+
+  const clearFilters = () => {
+    setMonth('')
+    setDateFrom('')
+    setDateTo('')
+    setNumberFilter('')
+    setPage(1)
+  }
+
+  const hasFilters = Boolean(month || dateFrom || dateTo || numberFilter.trim())
 
   const exportToExcel = async () => {
     setExporting(true)
@@ -158,19 +200,19 @@ export default function CallReports() {
       const allCalls = []
       let pageNum = 1
       let totalPages = 1
+      const query = filterParams()
       do {
-        const res = await api.getCalls({ page: pageNum, limit: 500 })
+        const res = await api.getCalls({ ...query, page: pageNum, limit: 500 })
         allCalls.push(...(res.calls || []))
         totalPages = res.totalPages || 1
         pageNum += 1
       } while (pageNum <= totalPages)
 
-      const rows = allCalls.filter(matchesSearch)
-      if (rows.length === 0) {
-        alert('No call records to export.')
+      if (allCalls.length === 0) {
+        alert('No call records match your filters.')
         return
       }
-      downloadCdrExcel(rows)
+      downloadCdrExcel(allCalls, exportFilename({ dateFrom, dateTo, number: numberQuery }))
     } catch (err) {
       console.error(err)
       alert(err.message || 'Could not export call reports')
@@ -178,6 +220,8 @@ export default function CallReports() {
       setExporting(false)
     }
   }
+
+  const calls = data.calls || []
 
   return (
     <div className="space-y-6">
@@ -198,28 +242,85 @@ export default function CallReports() {
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">
           {isMaster
-            ? 'Call duration, status, and recordings from Asterisk. Times shown in India Standard Time (IST).'
-            : 'Calls on your assigned DID only. Times shown in India Standard Time (IST).'}
+            ? 'Filter by month or date range and number. Times shown in India Standard Time (IST).'
+            : 'Calls on your assigned DID only. Filter by month, date range, or number (IST).'}
         </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
-        <div className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <SearchInput
-            placeholder="Search by caller, DID, or buyer number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-md w-full"
-          />
-          <PrimaryButton
-            type="button"
-            onClick={exportToExcel}
-            disabled={exporting || loading}
-            className="shrink-0"
-          >
-            <HiOutlineDocumentDownload className="w-5 h-5" />
-            {exporting ? 'Exporting…' : 'Export to Excel'}
-          </PrimaryButton>
+        <div className="p-5 space-y-4 border-b border-border">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <FilterField label="Month">
+              <input
+                type="month"
+                value={month}
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className={filterInputClass}
+              />
+            </FilterField>
+            <FilterField label="From date">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => handleDateFromChange(e.target.value)}
+                className={filterInputClass}
+              />
+            </FilterField>
+            <FilterField label="To date">
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => handleDateToChange(e.target.value)}
+                min={dateFrom || undefined}
+                className={filterInputClass}
+              />
+            </FilterField>
+            <FilterField label="Number (caller, DID, or buyer)">
+              <SearchInput
+                placeholder="e.g. 8138073157"
+                value={numberFilter}
+                onChange={(e) => {
+                  setNumberFilter(e.target.value)
+                  setPage(1)
+                }}
+                className="w-full"
+              />
+            </FilterField>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-sm text-gray-500">
+              {loading ? (
+                'Loading…'
+              ) : (
+                <>
+                  <span className="font-medium text-gray-700">{data.total ?? 0}</span> call
+                  {(data.total ?? 0) === 1 ? '' : 's'}
+                  {hasFilters ? ' matching filters' : ' total'}
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 border border-border rounded-xl hover:bg-gray-50"
+                >
+                  Clear filters
+                </button>
+              )}
+              <PrimaryButton
+                type="button"
+                onClick={exportToExcel}
+                disabled={exporting || loading}
+                className="shrink-0"
+              >
+                <HiOutlineDocumentDownload className="w-5 h-5" />
+                {exporting ? 'Exporting…' : 'Export to Excel'}
+              </PrimaryButton>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -242,14 +343,20 @@ export default function CallReports() {
                     Loading call reports…
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : calls.length === 0 ? (
                 <tr>
                   <td colSpan={7}>
-                    <EmptyState message="No calls yet. Records appear here when Asterisk sends CDR data." />
+                    <EmptyState
+                      message={
+                        hasFilters
+                          ? 'No calls match your filters. Try a wider date range or clear filters.'
+                          : 'No calls yet. Records appear here when Asterisk sends CDR data.'
+                      }
+                    />
                   </td>
                 </tr>
               ) : (
-                filtered.map((call) => (
+                calls.map((call) => (
                   <tr key={call.id} className="border-b border-border hover:bg-gray-50/50">
                     <td className="px-5 py-3.5 font-medium text-gray-900">{call.caller}</td>
                     <td className="px-5 py-3.5 text-gray-600">{call.did || '—'}</td>
