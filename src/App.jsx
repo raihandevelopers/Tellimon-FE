@@ -12,6 +12,7 @@ import Customers from './pages/Customers'
 import DIDManagement from './pages/DIDManagement'
 import CallReports from './pages/CallReports'
 import LiveCalls from './pages/LiveCalls'
+import MissedCalls from './pages/MissedCalls'
 import ActivityLogs from './pages/ActivityLogs'
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
               }
             />
             <Route path="call-reports" element={<CallReports />} />
+            <Route path="missed-calls" element={<MissedCalls />} />
             <Route path="live-calls" element={<LiveCalls />} />
             <Route path="activity-logs" element={<ActivityLogs />} />
           </Route>

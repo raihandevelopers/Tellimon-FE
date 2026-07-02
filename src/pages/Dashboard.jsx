@@ -74,10 +74,10 @@ export default function Dashboard() {
 
   const cards = [
     { label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck },
-    { label: 'Live Calls', value: liveCalls.length, icon: HiOutlineStatusOnline, live: true },
-    { label: 'Total Calls', value: stats.totalCalls, icon: HiOutlinePhone },
-    { label: 'Answered Calls', value: stats.answered, icon: HiOutlineCheckCircle },
-    { label: 'Missed Calls', value: stats.missed, icon: HiOutlinePhoneMissedCall },
+    { label: 'Live Calls', value: liveCalls.length, icon: HiOutlineStatusOnline, live: true, to: '/live-calls' },
+    { label: 'Total Calls', value: stats.totalCalls, icon: HiOutlinePhone, to: '/call-reports' },
+    { label: 'Answered Calls', value: stats.answered, icon: HiOutlineCheckCircle, to: '/call-reports' },
+    { label: 'Missed Calls', value: stats.missed, icon: HiOutlinePhoneMissedCall, to: '/missed-calls' },
   ]
 
   return (
@@ -113,7 +113,7 @@ export default function Dashboard() {
             {card.live && liveCalls.length > 0 && (
               <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-brand animate-pulse" />
             )}
-            <StatCard label={card.label} value={card.value} icon={card.icon} />
+            <StatCard label={card.label} value={card.value} icon={card.icon} to={card.to} />
           </div>
         ))}
       </div>
