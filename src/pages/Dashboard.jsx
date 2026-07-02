@@ -13,6 +13,7 @@ import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
 import { dedupeLiveCalls } from '../utils/dedupeLiveCalls'
+import { formatLiveDuration } from '../utils/formatLiveDuration'
 
 function formatDidDisplay(number) {
   const d = String(number || '').replace(/\D/g, '')
@@ -20,14 +21,6 @@ function formatDidDisplay(number) {
     return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
   }
   return number || '—'
-}
-
-function formatDuration(startedAt) {
-  if (!startedAt) return '0:00'
-  const sec = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000))
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 export default function Dashboard() {
@@ -168,7 +161,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
-                    <p className="font-medium text-brand mt-0.5">{formatDuration(call.startedAt)}</p>
+                    <p className="font-medium text-brand mt-0.5">{formatLiveDuration(call.startedAt)}</p>
                   </div>
                 </div>
               </div>

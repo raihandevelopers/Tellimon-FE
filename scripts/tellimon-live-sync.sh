@@ -32,16 +32,17 @@ with open(path) as f:
         # Only the inbound trunk leg — skip outbound buyer legs (duplicate row per call).
         if context != 'from-trunk':
             continue
-        caller = parts[7] if len(parts) > 7 else ''
+        # Asterisk concise: ...!CallerIDname!CallerIDnum!...!Duration!Bridged!Uniqueid!...
+        caller = parts[8] if len(parts) > 8 else (parts[7] if len(parts) > 7 else '')
         did = exten
         duration_sec = 0
-        for idx in (13, 12, 11, 10):
-            if len(parts) > idx and parts[idx]:
-                try:
-                    duration_sec = max(0, int(float(parts[idx])))
-                    break
-                except (ValueError, TypeError):
-                    continue
+        if len(parts) > 11 and parts[11]:
+            try:
+                duration_sec = max(0, int(float(parts[11])))
+                # Duration is channel age in seconds — cap to avoid bad parses.
+                duration_sec = min(duration_sec, 86400)
+            except (ValueError, TypeError):
+                duration_sec = 0
         started_at = (now - timedelta(seconds=duration_sec)).isoformat()
         calls.append({
             'channelId': channel_id,
