@@ -25,11 +25,24 @@ export function buildCallQuery({ page, limit, dateFrom, dateTo, number, status }
   return params
 }
 
-export function exportFilename({ dateFrom, dateTo, number }) {
+export const CALL_STATUS_FILTERS = [
+  { value: '', label: 'All statuses' },
+  { value: 'answered', label: 'Answered' },
+  { value: 'unanswered', label: 'Unanswered (no-answer, busy)' },
+  { value: 'missed-only', label: 'Missed' },
+]
+
+export function callStatusLabel(status) {
+  const match = CALL_STATUS_FILTERS.find((f) => f.value === status)
+  return match?.label || 'All statuses'
+}
+
+export function exportFilename({ dateFrom, dateTo, number, status }) {
   const parts = ['tellimon-cdr']
   if (dateFrom && dateTo) parts.push(`${dateFrom}_to_${dateTo}`)
   else if (dateFrom) parts.push(`from-${dateFrom}`)
   else if (dateTo) parts.push(`to-${dateTo}`)
+  if (status) parts.push(status)
   if (number?.trim()) {
     const digits = number.replace(/\D/g, '')
     if (digits) parts.push(digits.slice(0, 15))
@@ -39,26 +52,26 @@ export function exportFilename({ dateFrom, dateTo, number }) {
 
 /** Map export modal choice to API query params. */
 export function resolveExportQuery(mode, options = {}) {
-  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '' } = options
+  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '', status = '' } = options
 
   if (mode === 'all') {
-    return buildCallQuery({ number })
+    return buildCallQuery({ number, status })
   }
   if (mode === 'current') {
     return buildCallQuery(tableFilters)
   }
   if (mode === 'month') {
     const range = monthToDateRange(month)
-    return buildCallQuery({ dateFrom: range.from, dateTo: range.to, number })
+    return buildCallQuery({ dateFrom: range.from, dateTo: range.to, number, status })
   }
   if (mode === 'range') {
-    return buildCallQuery({ dateFrom, dateTo, number })
+    return buildCallQuery({ dateFrom, dateTo, number, status })
   }
   return {}
 }
 
 export function describeExportScope(mode, options = {}) {
-  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '' } = options
+  const { tableFilters = {}, month = '', dateFrom = '', dateTo = '', number = '', status = '' } = options
   const parts = []
 
   if (mode === 'all') {
@@ -68,6 +81,7 @@ export function describeExportScope(mode, options = {}) {
     if (tableFilters.dateFrom || tableFilters.dateTo) {
       parts.push(`${tableFilters.dateFrom || '…'} to ${tableFilters.dateTo || '…'}`)
     }
+    if (tableFilters.status) parts.push(callStatusLabel(tableFilters.status))
     if (tableFilters.number?.trim()) parts.push(`number: ${tableFilters.number.trim()}`)
   } else if (mode === 'month') {
     if (month) {
@@ -90,6 +104,10 @@ export function describeExportScope(mode, options = {}) {
 
   if (mode !== 'current' && number?.trim()) {
     parts.push(`number: ${number.trim()}`)
+  }
+
+  if (mode !== 'current' && status) {
+    parts.push(callStatusLabel(status))
   }
 
   return parts.join(' · ')

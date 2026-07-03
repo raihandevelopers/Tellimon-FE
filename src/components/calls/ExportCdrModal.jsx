@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { HiOutlineDocumentDownload } from 'react-icons/hi'
 import PrimaryButton from '../ui/PrimaryButton'
 import SearchInput from '../ui/SearchInput'
-import { describeExportScope, monthToDateRange, resolveExportQuery } from '../../utils/cdrFilters'
+import { CALL_STATUS_FILTERS, describeExportScope, monthToDateRange, resolveExportQuery } from '../../utils/cdrFilters'
 
 const filterInputClass =
   'w-full px-3 py-2 text-sm border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand'
@@ -34,6 +34,7 @@ export default function ExportCdrModal({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [number, setNumber] = useState('')
+  const [status, setStatus] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -44,7 +45,8 @@ export default function ExportCdrModal({
     setDateFrom(tableFilters.dateFrom || '')
     setDateTo(tableFilters.dateTo || '')
     setNumber('')
-  }, [open, hasTableFilters, tableFilters.dateFrom, tableFilters.dateTo])
+    setStatus(tableFilters.status || '')
+  }, [open, hasTableFilters, tableFilters.dateFrom, tableFilters.dateTo, tableFilters.status])
 
   useEffect(() => {
     if (!open) return
@@ -61,7 +63,7 @@ export default function ExportCdrModal({
 
   if (!open) return null
 
-  const options = { tableFilters, month, dateFrom, dateTo, number }
+  const options = { tableFilters, month, dateFrom, dateTo, number, status }
   const summary = describeExportScope(mode, options)
 
   const handleMonthChange = (value) => {
@@ -95,7 +97,10 @@ export default function ExportCdrModal({
     }
     setError('')
     const query = resolveExportQuery(mode, options)
-    const filenameParts = { number: mode === 'current' ? tableFilters.number : number }
+    const filenameParts = {
+      number: mode === 'current' ? tableFilters.number : number,
+      status: mode === 'current' ? tableFilters.status : status,
+    }
     if (mode === 'month') {
       const range = monthToDateRange(month)
       filenameParts.dateFrom = range.from
@@ -195,15 +200,31 @@ export default function ExportCdrModal({
           )}
 
           {mode !== 'current' && (
-            <label className="block">
-              <span className="text-xs font-medium text-gray-500">Number filter (optional)</span>
-              <SearchInput
-                placeholder="Caller, DID, or buyer number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                className="w-full mt-1"
-              />
-            </label>
+            <>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500">Call status (optional)</span>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className={`${filterInputClass} mt-1`}
+                >
+                  {CALL_STATUS_FILTERS.map((opt) => (
+                    <option key={opt.value || 'all'} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500">Number filter (optional)</span>
+                <SearchInput
+                  placeholder="Caller, DID, or buyer number"
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value)}
+                  className="w-full mt-1"
+                />
+              </label>
+            </>
           )}
 
           <div className="rounded-xl bg-gray-50 border border-border px-4 py-3 text-sm text-gray-600">

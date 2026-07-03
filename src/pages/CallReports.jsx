@@ -10,7 +10,7 @@ import ExportCdrModal from '../components/calls/ExportCdrModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
 import { downloadCdrExcel } from '../utils/exportCdr'
-import { buildCallQuery, exportFilename, monthToDateRange } from '../utils/cdrFilters'
+import { buildCallQuery, exportFilename, monthToDateRange, CALL_STATUS_FILTERS } from '../utils/cdrFilters'
 import { useAuth } from '../context/AuthContext'
 
 const statusStyles = {
@@ -59,6 +59,7 @@ export default function CallReports() {
   const [dateTo, setDateTo] = useState('')
   const [numberFilter, setNumberFilter] = useState('')
   const [numberQuery, setNumberQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [recordingLoading, setRecordingLoading] = useState(null)
   const [exporting, setExporting] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -66,8 +67,8 @@ export default function CallReports() {
   const playerUrlRef = useRef('')
 
   const filterParams = useCallback(
-    () => buildCallQuery({ dateFrom, dateTo, number: numberQuery }),
-    [dateFrom, dateTo, numberQuery]
+    () => buildCallQuery({ dateFrom, dateTo, number: numberQuery, status: statusFilter }),
+    [dateFrom, dateTo, numberQuery, statusFilter]
   )
 
   const revokePlayerUrl = () => {
@@ -191,15 +192,17 @@ export default function CallReports() {
     setDateFrom('')
     setDateTo('')
     setNumberFilter('')
+    setStatusFilter('')
     setPage(1)
   }
 
-  const hasFilters = Boolean(month || dateFrom || dateTo || numberFilter.trim())
+  const hasFilters = Boolean(month || dateFrom || dateTo || numberFilter.trim() || statusFilter)
 
   const tableFilters = {
     dateFrom,
     dateTo,
     number: numberQuery,
+    status: statusFilter,
   }
 
   const runExport = async ({ query, filenameParts }) => {
@@ -219,7 +222,7 @@ export default function CallReports() {
         alert('No call records match your export selection.')
         return
       }
-      downloadCdrExcel(allCalls, exportFilename(filenameParts))
+      downloadCdrExcel(allCalls, exportFilename({ ...filenameParts, status: query.status }))
       setExportOpen(false)
     } catch (err) {
       console.error(err)
@@ -250,14 +253,14 @@ export default function CallReports() {
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">
           {isMaster
-            ? 'Filter by month or date range and number. Times shown in India Standard Time (IST).'
-            : 'Calls on your assigned DID only. Filter by month, date range, or number (IST).'}
+            ? 'Filter by month, date range, status, or number. Times shown in India Standard Time (IST).'
+            : 'Calls on your assigned DID only. Filter by month, date, status, or number (IST).'}
         </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
         <div className="p-5 space-y-4 border-b border-border">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <FilterField label="Month">
               <input
                 type="month"
@@ -293,6 +296,22 @@ export default function CallReports() {
                 }}
                 className="w-full"
               />
+            </FilterField>
+            <FilterField label="Call status">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value)
+                  setPage(1)
+                }}
+                className={filterInputClass}
+              >
+                {CALL_STATUS_FILTERS.map((opt) => (
+                  <option key={opt.value || 'all'} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </FilterField>
           </div>
 
