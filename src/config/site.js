@@ -1,0 +1,5 @@
+export const SITE_NAME = 'hitechpbxworld'
+export const SITE_TITLE = 'hitechpbxworld — Control Panel'
+export const SITE_TAGLINE = 'Call Forwarding Control Panel'
+export const SITE_DOMAIN = 'hitechpbxworld.com'
+export const SITE_URL = 'https://hitechpbxworld.com'

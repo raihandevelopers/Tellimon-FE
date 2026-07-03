@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import Logo from '../Logo'
 import { useAuth } from '../../context/AuthContext'
 import { navItemsForRole } from '../../config/navItems'
+import { SITE_NAME } from '../../config/site'
 
 export default function Sidebar({ open, onClose }) {
   const { isMaster } = useAuth()
@@ -29,7 +30,7 @@ export default function Sidebar({ open, onClose }) {
 
         <div className="px-5 pt-4 pb-2">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-brand">
-            Workspace
+            {SITE_NAME}
           </p>
         </div>
 

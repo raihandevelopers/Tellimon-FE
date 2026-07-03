@@ -1,6 +1,6 @@
-# Tellimon — Client Overview
+# hitechpbxworld — Client Overview
 
-**Tellimon** is a web control panel for inbound call forwarding. You manage who receives calls, block unwanted numbers, and review call history — without touching phone servers directly.
+**hitechpbxworld** is a web control panel for inbound call forwarding. You manage who receives calls, block unwanted numbers, and review call history — without touching phone servers directly.
 
 **Panel:** [hitechpbxworld.com](https://hitechpbxworld.com)
 
@@ -56,7 +56,7 @@ Caller dials your DID (e.g. +1 888 956-7021)
         ↓
 XoloIP → Asterisk phone server
         ↓
-Tellimon picks buyer (campaign strategy or direct DID assignment)
+hitechpbxworld picks buyer (campaign strategy or direct DID assignment)
         ↓
 Checks: blocked? daily cap? concurrent limit?
         ↓

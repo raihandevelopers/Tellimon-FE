@@ -48,7 +48,7 @@ export function downloadCdrExcel(calls = [], filename) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename || `tellimon-cdr-${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = filename || `hitechpbxworld-cdr-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

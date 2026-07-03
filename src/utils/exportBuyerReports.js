@@ -35,13 +35,13 @@ export function downloadBuyerReportsExcel(reports = [], filename) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename || `tellimon-buyer-reports-${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = filename || `hitechpbxworld-buyer-reports-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export function buyerReportFilename({ dateFrom, dateTo, status }) {
-  const parts = ['tellimon-buyer-reports']
+  const parts = ['hitechpbxworld-buyer-reports']
   if (dateFrom && dateTo) parts.push(`${dateFrom}_to_${dateTo}`)
   else if (dateFrom) parts.push(`from-${dateFrom}`)
   else if (dateTo) parts.push(`to-${dateTo}`)

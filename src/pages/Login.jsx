@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
+import { SITE_NAME } from '../config/site'
 import PrimaryButton from '../components/ui/PrimaryButton'
 
 export default function Login() {
@@ -44,7 +45,7 @@ export default function Login() {
             <Logo size="2xl" variant="dark" />
           </div>
           <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
-            Enterprise call forwarding &amp; telephony control panel. Manage campaigns, DIDs, and live calls from one place.
+            {SITE_NAME} — enterprise call forwarding &amp; telephony control panel. Manage campaigns, DIDs, and live calls from one place.
           </p>
           <div className="mt-10 flex justify-center gap-8 text-gray-500 text-sm">
             <div className="text-center">
@@ -71,7 +72,7 @@ export default function Login() {
 
           <div className="bg-white rounded-2xl shadow-lg border border-border p-8 ring-1 ring-brand/10">
             <h2 className="text-2xl font-bold text-ink mb-1">Welcome back</h2>
-            <p className="text-sm text-gray-500 mb-8">Sign in to your control room</p>
+            <p className="text-sm text-gray-500 mb-8">Sign in to {SITE_NAME}</p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>

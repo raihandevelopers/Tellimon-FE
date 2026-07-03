@@ -50,7 +50,7 @@ export function callStatusLabel(status) {
 }
 
 export function exportFilename({ dateFrom, dateTo, number, status }) {
-  const parts = ['tellimon-cdr']
+  const parts = ['hitechpbxworld-cdr']
   if (dateFrom && dateTo) parts.push(`${dateFrom}_to_${dateTo}`)
   else if (dateFrom) parts.push(`from-${dateFrom}`)
   else if (dateTo) parts.push(`to-${dateTo}`)

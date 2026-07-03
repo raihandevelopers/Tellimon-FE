@@ -1,4 +1,5 @@
 import logoImage from '../assets/logo.jpeg'
+import { SITE_NAME, SITE_TAGLINE } from '../config/site'
 
 export default function Logo({ size = 'md', variant = 'light', showText = false, wide = false }) {
   const sizes = {
@@ -19,31 +20,31 @@ export default function Logo({ size = 'md', variant = 'light', showText = false,
   const s = textSizes[size] ?? textSizes.md
 
   return (
-    <div className={`flex items-center gap-3 ${wide ? 'w-full justify-center' : ''}`}>
+    <div className={`flex items-center gap-3 ${wide ? 'w-full justify-center flex-col' : ''}`}>
       <img
         src={logoImage}
-        alt="HITECH PBX"
+        alt={SITE_NAME}
         className={
           wide
             ? 'w-full max-w-[220px] h-auto object-contain shrink-0'
             : `${sizes[size] ?? sizes.md} w-auto object-contain shrink-0`
         }
       />
-      {showText && (
-        <div>
+      {(showText || wide) && (
+        <div className={wide ? 'text-center' : ''}>
           <div
-            className={`${s.title} font-bold tracking-wide uppercase leading-tight ${
+            className={`${s.title} font-bold tracking-wide lowercase leading-tight ${
               isDark ? 'text-white' : 'text-ink'
             }`}
           >
-            Tellimon
+            {SITE_NAME}
           </div>
           <div
             className={`${s.subtitle} uppercase tracking-widest font-medium ${
               isDark ? 'text-brand' : 'text-gray-500'
             }`}
           >
-            User Control Room
+            {SITE_TAGLINE}
           </div>
         </div>
       )}

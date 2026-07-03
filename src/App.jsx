@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { SITE_TITLE } from './config/site'
 import ProtectedRoute from './components/ProtectedRoute'
 import MasterRoute from './components/MasterRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -18,6 +20,10 @@ import ActivityLogs from './pages/ActivityLogs'
 import Wallet from './pages/Wallet'
 
 export default function App() {
+  useEffect(() => {
+    document.title = SITE_TITLE
+  }, [])
+
   return (
     <AuthProvider>
       <BrowserRouter>
