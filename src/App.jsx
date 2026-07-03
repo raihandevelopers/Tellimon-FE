@@ -18,6 +18,7 @@ import LiveCalls from './pages/LiveCalls'
 import MissedCalls from './pages/MissedCalls'
 import ActivityLogs from './pages/ActivityLogs'
 import Wallet from './pages/Wallet'
+import AssignmentNumbers from './pages/AssignmentNumbers'
 
 export default function App() {
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="live-calls" element={<LiveCalls />} />
             <Route path="activity-logs" element={<ActivityLogs />} />
             <Route path="wallet" element={<Wallet />} />
+            <Route path="assignment-numbers" element={<AssignmentNumbers />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

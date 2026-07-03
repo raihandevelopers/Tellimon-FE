@@ -57,7 +57,11 @@ export default function Customers() {
       (c) =>
         c.name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
-        c.assignedDids?.some((d) => d.number?.includes(q))
+        c.assignedDids?.some(
+          (d) =>
+            d.number?.includes(q) ||
+            d.displayNumber?.includes(q)
+        )
     )
   }, [customers, search])
 
@@ -96,7 +100,10 @@ export default function Customers() {
   const openEdit = (customer) => {
     setEditCustomer({
       ...customer,
-      didIds: (customer.assignedDids || []).map((d) => d.id),
+      didAssignments: (customer.assignedDids || []).map((d) => ({
+        didId: d.id,
+        displayNumber: d.displayNumber || '',
+      })),
     })
   }
 
@@ -176,7 +183,13 @@ export default function Customers() {
                     <td className="px-5 py-3.5 text-gray-600">{customer.email}</td>
                     <td className="px-5 py-3.5 text-gray-600">
                       {customer.assignedDids?.length
-                        ? customer.assignedDids.map((d) => formatDid(d.number)).join(', ')
+                        ? customer.assignedDids
+                            .map((d) =>
+                              d.displayNumber
+                                ? `${formatDid(d.number)} → ${formatDid(d.displayNumber)}`
+                                : formatDid(d.number)
+                            )
+                            .join(', ')
                         : '—'}
                     </td>
                     <td className="px-5 py-3.5 font-semibold text-brand">{formatMoney(customer.walletBalance)}</td>

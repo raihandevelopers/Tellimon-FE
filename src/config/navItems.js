@@ -19,6 +19,7 @@ export const navItems = [
   { to: '/buyers', label: 'Buyers', icon: HiOutlineUserGroup },
   { to: '/buyer-reports', label: 'Buyer Reports', icon: HiOutlineChartPie },
   { to: '/customers', label: 'Customers', icon: HiOutlineUsers, masterOnly: true },
+  { to: '/assignment-numbers', label: 'Assignment Numbers', icon: HiOutlinePhone, customerOnly: true },
   { to: '/wallet', label: 'Wallet', icon: HiOutlineCurrencyDollar },
   { to: '/did-management', label: 'DID Management', icon: HiOutlinePhone, masterOnly: true },
   { to: '/call-reports', label: 'Call Reports', icon: HiOutlineChartBar },
@@ -27,5 +28,9 @@ export const navItems = [
 ]
 
 export function navItemsForRole(isMaster) {
-  return navItems.filter((item) => !item.masterOnly || isMaster)
+  return navItems.filter((item) => {
+    if (item.masterOnly && !isMaster) return false
+    if (item.customerOnly && isMaster) return false
+    return true
+  })
 }

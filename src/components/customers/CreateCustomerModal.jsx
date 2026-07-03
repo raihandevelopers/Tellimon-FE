@@ -1,10 +1,18 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 const emptyForm = {
   name: '',
   email: '',
   password: '',
-  didIds: [],
+  didAssignments: [],
+}
+
+function formatDid(number) {
+  const d = String(number || '').replace(/\D/g, '')
+  if (d.length === 11 && d.startsWith('1')) {
+    return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
+  }
+  return number
 }
 
 export default function CreateCustomerModal({
@@ -15,6 +23,8 @@ export default function CreateCustomerModal({
   mode = 'create',
   dids = [],
 }) {
+  const [assignments, setAssignments] = useState({})
+
   useEffect(() => {
     if (!open) return
     const handleKey = (e) => {
@@ -28,23 +38,57 @@ export default function CreateCustomerModal({
     }
   }, [open, onClose])
 
+  useEffect(() => {
+    if (!open) return
+    const next = {}
+    const initialAssignments = initial.didAssignments || []
+    for (const did of dids.filter((d) => !d.isMain)) {
+      const existing = initialAssignments.find((a) => String(a.didId) === String(did.id))
+      next[did.id] = {
+        checked: Boolean(existing),
+        displayNumber: existing?.displayNumber || '',
+      }
+    }
+    setAssignments(next)
+  }, [open, dids, initial])
+
   if (!open) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const form = new FormData(e.target)
-    const selected = [...form.getAll('didIds')].filter(Boolean)
+    const didAssignments = Object.entries(assignments)
+      .filter(([, value]) => value.checked)
+      .map(([didId, value]) => ({
+        didId,
+        displayNumber: value.displayNumber.trim(),
+      }))
+
     const payload = {
       name: form.get('name').trim(),
       email: form.get('email').trim(),
-      didIds: selected,
+      didAssignments,
     }
     const password = form.get('password')?.trim()
     if (mode === 'create' || password) payload.password = password
     onSubmit(payload)
   }
 
-  const assignedIds = new Set((initial.didIds || []).map(String))
+  const toggleDid = (didId, checked) => {
+    setAssignments((prev) => ({
+      ...prev,
+      [didId]: { ...prev[didId], checked },
+    }))
+  }
+
+  const setDisplayNumber = (didId, displayNumber) => {
+    setAssignments((prev) => ({
+      ...prev,
+      [didId]: { ...prev[didId], displayNumber },
+    }))
+  }
+
+  const assignableDids = dids.filter((d) => !d.isMain)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -107,32 +151,46 @@ export default function CreateCustomerModal({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Assign DIDs</label>
             <p className="text-xs text-gray-500 mb-3">
-              Customer sees call reports and live calls only for assigned DIDs. Main DIDs are not assignable.
+              Real DIDs route calls in Asterisk. Set an assignment number for each DID — that is what the
+              customer sees in their panel (not the real DID).
             </p>
-            <div className="max-h-40 overflow-y-auto border border-border rounded-xl divide-y divide-border">
-              {dids.filter((d) => !d.isMain).length === 0 ? (
+            <div className="max-h-56 overflow-y-auto border border-border rounded-xl divide-y divide-border">
+              {assignableDids.length === 0 ? (
                 <p className="px-4 py-3 text-sm text-gray-400">No assignable DIDs yet. Add a non-main DID first.</p>
               ) : (
-                dids
-                  .filter((d) => !d.isMain)
-                  .map((did) => (
-                    <label
-                      key={did.id}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        name="didIds"
-                        value={did.id}
-                        defaultChecked={assignedIds.has(String(did.id))}
-                        className="rounded border-border"
-                      />
-                      <span className="font-medium text-gray-900">{did.number}</span>
-                      {did.customerName && (
-                        <span className="text-xs text-amber-600 ml-auto">→ {did.customerName}</span>
+                assignableDids.map((did) => {
+                  const state = assignments[did.id] || { checked: false, displayNumber: '' }
+                  return (
+                    <div key={did.id} className="px-4 py-3 space-y-2">
+                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={state.checked}
+                          onChange={(e) => toggleDid(did.id, e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="font-medium text-gray-900">{formatDid(did.number)}</span>
+                        {did.customerName && !state.checked && (
+                          <span className="text-xs text-amber-600 ml-auto">→ {did.customerName}</span>
+                        )}
+                      </label>
+                      {state.checked && (
+                        <div className="pl-7">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Assignment number (shown to customer)
+                          </label>
+                          <input
+                            type="text"
+                            value={state.displayNumber}
+                            onChange={(e) => setDisplayNumber(did.id, e.target.value)}
+                            placeholder="e.g. 18005551234"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                          />
+                        </div>
                       )}
-                    </label>
-                  ))
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>

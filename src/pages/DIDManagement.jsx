@@ -31,6 +31,7 @@ export default function DIDManagement() {
     status: 'Active',
     isMain: false,
     assignedCustomerId: '',
+    customerDisplayNumber: '',
   })
   const [error, setError] = useState('')
 
@@ -71,6 +72,7 @@ export default function DIDManagement() {
         status: form.status,
         isMain: isMaster ? form.isMain : undefined,
         assignedCustomerId: form.assignedCustomerId || null,
+        customerDisplayNumber: form.assignedCustomerId ? form.customerDisplayNumber || null : null,
       })
       setDids((prev) => [created, ...prev])
       setModalOpen(false)
@@ -82,6 +84,7 @@ export default function DIDManagement() {
         status: 'Active',
         isMain: false,
         assignedCustomerId: '',
+        customerDisplayNumber: '',
       })
       load()
     } catch (err) {
@@ -104,6 +107,7 @@ export default function DIDManagement() {
       status: did.status || 'Active',
       isMain: Boolean(did.isMain),
       assignedCustomerId: did.assignedCustomerId || '',
+      customerDisplayNumber: did.displayNumber || did.customerDisplayNumber || '',
     })
   }
 
@@ -118,6 +122,7 @@ export default function DIDManagement() {
         status: form.status,
         isMain: isMaster ? form.isMain : undefined,
         assignedCustomerId: form.assignedCustomerId || null,
+        customerDisplayNumber: form.assignedCustomerId ? form.customerDisplayNumber || null : null,
       })
       setEditDid(null)
       load()
@@ -200,7 +205,18 @@ export default function DIDManagement() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">{did.buyerName || '—'}</td>
-                  <td className="px-5 py-3.5 text-gray-600">{did.customerName || '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">
+                    {did.customerName ? (
+                      <div>
+                        <span>{did.customerName}</span>
+                        {did.displayNumber && (
+                          <p className="text-xs text-gray-400 mt-0.5">Shows: {formatDidDisplay(did.displayNumber)}</p>
+                        )}
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td className="px-5 py-3.5 text-gray-600">{did.campaignName || 'Default'}</td>
                   <td className="px-5 py-3.5 text-gray-600 font-mono text-xs">{did.trunk}</td>
                   <td className="px-5 py-3.5 text-gray-600">{did.callsToday ?? 0}</td>
@@ -289,7 +305,13 @@ export default function DIDManagement() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to customer</label>
                   <select
                     value={form.assignedCustomerId}
-                    onChange={(e) => setForm({ ...form, assignedCustomerId: e.target.value })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        assignedCustomerId: e.target.value,
+                        customerDisplayNumber: e.target.value ? form.customerDisplayNumber : '',
+                      })
+                    }
                     className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
                   >
                     <option value="">No customer (master only)</option>
@@ -299,6 +321,19 @@ export default function DIDManagement() {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+              {!form.isMain && form.assignedCustomerId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Assignment number (shown to customer)
+                  </label>
+                  <input
+                    value={form.customerDisplayNumber}
+                    onChange={(e) => setForm({ ...form, customerDisplayNumber: e.target.value })}
+                    placeholder="e.g. 18005551234"
+                    className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  />
                 </div>
               )}
               <div>
@@ -315,7 +350,12 @@ export default function DIDManagement() {
                     type="checkbox"
                     checked={form.isMain}
                     onChange={(e) =>
-                      setForm({ ...form, isMain: e.target.checked, assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId })
+                      setForm({
+                        ...form,
+                        isMain: e.target.checked,
+                        assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId,
+                        customerDisplayNumber: e.target.checked ? '' : form.customerDisplayNumber,
+                      })
                     }
                     className="rounded border-border"
                   />
@@ -385,7 +425,13 @@ export default function DIDManagement() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to customer</label>
                   <select
                     value={form.assignedCustomerId}
-                    onChange={(e) => setForm({ ...form, assignedCustomerId: e.target.value })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        assignedCustomerId: e.target.value,
+                        customerDisplayNumber: e.target.value ? form.customerDisplayNumber : '',
+                      })
+                    }
                     className="w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white"
                   >
                     <option value="">No customer (master only)</option>
@@ -395,6 +441,19 @@ export default function DIDManagement() {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+              {!form.isMain && form.assignedCustomerId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Assignment number (shown to customer)
+                  </label>
+                  <input
+                    value={form.customerDisplayNumber}
+                    onChange={(e) => setForm({ ...form, customerDisplayNumber: e.target.value })}
+                    placeholder="e.g. 18005551234"
+                    className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  />
                 </div>
               )}
               <div>
@@ -422,7 +481,12 @@ export default function DIDManagement() {
                     type="checkbox"
                     checked={form.isMain}
                     onChange={(e) =>
-                      setForm({ ...form, isMain: e.target.checked, assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId })
+                      setForm({
+                        ...form,
+                        isMain: e.target.checked,
+                        assignedCustomerId: e.target.checked ? '' : form.assignedCustomerId,
+                        customerDisplayNumber: e.target.checked ? '' : form.customerDisplayNumber,
+                      })
                     }
                     className="rounded border-border"
                   />
