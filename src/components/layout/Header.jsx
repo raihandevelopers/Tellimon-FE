@@ -19,8 +19,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
         setMenuOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
   }, [])
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
   const displayBalance = balance ?? user?.walletBalance ?? 0
 
   return (
-    <header className="h-14 sm:h-16 lg:h-20 border-b border-border-dark bg-ink flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 overflow-hidden">
+    <header className="relative z-40 h-14 sm:h-16 lg:h-20 border-b border-border-dark bg-ink flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2">
       <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-none">
         <button
           type="button"
@@ -89,7 +89,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-ink-soft border border-border-dark rounded-xl shadow-xl py-1 z-50">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-ink-soft border border-border-dark rounded-xl shadow-xl py-1 z-[100]">
               <div className="px-4 py-2 border-b border-border-dark">
                 <p className="text-sm font-medium text-white">{user?.name}</p>
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
