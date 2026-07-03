@@ -137,10 +137,15 @@ export default function CallReports() {
   useEffect(() => () => revokePlayerUrl(), [])
 
   useEffect(() => {
-    const preset = searchParams.get('number')
-    if (preset) {
-      setNumberFilter(preset)
-      setNumberQuery(preset)
+    const presetNumber = searchParams.get('number')
+    const presetStatus = searchParams.get('status')
+    if (presetNumber) {
+      setNumberFilter(presetNumber)
+      setNumberQuery(presetNumber)
+      setPage(1)
+    }
+    if (presetStatus != null) {
+      setStatusFilter(presetStatus)
       setPage(1)
     }
   }, [searchParams])

@@ -6,7 +6,7 @@ import EmptyState from '../components/ui/EmptyState'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import InfoBanner from '../components/ui/InfoBanner'
 import { api } from '../api/client'
-import { monthToDateRange } from '../utils/cdrFilters'
+import { monthToDateRange, BUYER_REPORT_STATUS_FILTERS, buyerReportStatusLabel } from '../utils/cdrFilters'
 import { downloadBuyerReportsExcel, buyerReportFilename } from '../utils/exportBuyerReports'
 
 const filterInputClass =
@@ -30,6 +30,7 @@ export default function BuyerReports() {
   const [month, setMonth] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const loadReports = async () => {
     setLoading(true)
@@ -37,6 +38,7 @@ export default function BuyerReports() {
       const params = {}
       if (dateFrom) params.from = dateFrom
       if (dateTo) params.to = dateTo
+      if (statusFilter) params.status = statusFilter
       const data = await api.getBuyerReports(params)
       setReports(data.reports || [])
       setTotalCalls(data.totalCalls || 0)
@@ -51,7 +53,7 @@ export default function BuyerReports() {
 
   useEffect(() => {
     loadReports()
-  }, [dateFrom, dateTo])
+  }, [dateFrom, dateTo, statusFilter])
 
   const handleMonthChange = (value) => {
     setMonth(value)
@@ -78,28 +80,38 @@ export default function BuyerReports() {
     try {
       downloadBuyerReportsExcel(
         filtered,
-        buyerReportFilename({ dateFrom, dateTo })
+        buyerReportFilename({ dateFrom, dateTo, status: statusFilter })
       )
     } finally {
       setExporting(false)
     }
   }
 
-  const clearDates = () => {
+  const clearFilters = () => {
     setMonth('')
     setDateFrom('')
     setDateTo('')
+    setStatusFilter('')
+    setSearch('')
+  }
+
+  const callDetailsLink = (buyer) => {
+    const params = new URLSearchParams()
+    if (buyer.number) params.set('number', buyer.number)
+    if (statusFilter) params.set('status', statusFilter)
+    const q = params.toString()
+    return `/call-reports${q ? `?${q}` : ''}`
   }
 
   return (
     <div className="space-y-5">
       <InfoBanner>
-        Call counts per buyer from completed CDR records. Filter by date and export to Excel.
+        Call counts per buyer from CDR records. Filter by date, call status (complete / missed), and export to Excel.
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm ring-1 ring-brand/5 overflow-hidden">
         <div className="p-5 flex flex-col xl:flex-row xl:items-end gap-4 justify-between border-b border-border">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 flex-1">
             <FilterField label="Month (IST)">
               <input
                 type="month"
@@ -130,6 +142,19 @@ export default function BuyerReports() {
                 className={filterInputClass}
               />
             </FilterField>
+            <FilterField label="Call status">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={filterInputClass}
+              >
+                {BUYER_REPORT_STATUS_FILTERS.map((opt) => (
+                  <option key={opt.value || 'all'} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
             <FilterField label="Search buyer">
               <SearchInput
                 placeholder="Name or number…"
@@ -141,10 +166,10 @@ export default function BuyerReports() {
           <div className="flex flex-wrap gap-2 shrink-0">
             <button
               type="button"
-              onClick={clearDates}
+              onClick={clearFilters}
               className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-gray-50"
             >
-              All time
+              Clear filters
             </button>
             <PrimaryButton type="button" onClick={handleExport} disabled={exporting || filtered.length === 0}>
               <HiOutlineDocumentDownload className="w-4 h-4" />
@@ -164,12 +189,13 @@ export default function BuyerReports() {
           ) : (
             <span> · all time</span>
           )}
+          {statusFilter ? <span> · {buyerReportStatusLabel(statusFilter)}</span> : null}
         </div>
 
         {loading ? (
           <div className="p-12 text-center text-sm text-gray-400">Loading buyer reports…</div>
         ) : filtered.length === 0 ? (
-          <EmptyState message="No buyers or no calls in this date range." />
+          <EmptyState message="No buyers or no calls match these filters." />
         ) : (
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((buyer) => (
@@ -202,7 +228,7 @@ export default function BuyerReports() {
                   </div>
                   <div className="rounded-xl bg-brand-light/50 border border-brand/20 px-3 py-2.5">
                     <p className="text-[10px] uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                      <HiOutlineCheckCircle className="w-3.5 h-3.5" /> Answered
+                      <HiOutlineCheckCircle className="w-3.5 h-3.5" /> Complete
                     </p>
                     <p className="text-2xl font-bold text-brand-dark mt-1">{buyer.answered}</p>
                   </div>
@@ -219,7 +245,7 @@ export default function BuyerReports() {
                 </div>
 
                 <Link
-                  to={`/call-reports?number=${encodeURIComponent(buyer.number || '')}`}
+                  to={callDetailsLink(buyer)}
                   className="inline-block mt-4 text-xs font-medium text-brand hover:text-brand-dark"
                 >
                   View call details →

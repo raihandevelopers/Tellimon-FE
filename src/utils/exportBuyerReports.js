@@ -40,10 +40,11 @@ export function downloadBuyerReportsExcel(reports = [], filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function buyerReportFilename({ dateFrom, dateTo }) {
+export function buyerReportFilename({ dateFrom, dateTo, status }) {
   const parts = ['tellimon-buyer-reports']
   if (dateFrom && dateTo) parts.push(`${dateFrom}_to_${dateTo}`)
   else if (dateFrom) parts.push(`from-${dateFrom}`)
   else if (dateTo) parts.push(`to-${dateTo}`)
+  if (status) parts.push(status)
   return `${parts.join('-')}.csv`
 }

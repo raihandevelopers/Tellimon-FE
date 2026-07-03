@@ -25,6 +25,18 @@ export function buildCallQuery({ page, limit, dateFrom, dateTo, number, status }
   return params
 }
 
+export const BUYER_REPORT_STATUS_FILTERS = [
+  { value: '', label: 'All calls' },
+  { value: 'answered', label: 'Complete (answered)' },
+  { value: 'missed', label: 'Missed' },
+  { value: 'unanswered', label: 'Unanswered' },
+]
+
+export function buyerReportStatusLabel(status) {
+  const match = BUYER_REPORT_STATUS_FILTERS.find((f) => f.value === status)
+  return match?.label || 'All calls'
+}
+
 export const CALL_STATUS_FILTERS = [
   { value: '', label: 'All statuses' },
   { value: 'answered', label: 'Answered' },
