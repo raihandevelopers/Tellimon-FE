@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { HiOutlineChevronDown, HiOutlineChevronUp, HiOutlineX } from 'react-icons/hi'
 import Toggle from '../ui/Toggle'
 
 const emptyForm = {
@@ -18,6 +19,13 @@ function formatPhoneNumber(number) {
     return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`
   }
   return number || '—'
+}
+
+function priorityLabel(rank) {
+  if (rank === 1) return '1st priority'
+  if (rank === 2) return '2nd priority'
+  if (rank === 3) return '3rd priority'
+  return `${rank}th priority`
 }
 
 function FormRow({ label, required, children }) {
@@ -65,10 +73,24 @@ export default function CampaignFormModal({
 
   if (!open) return null
 
-  const toggleBuyer = (id) => {
-    setSelectedBuyers((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
+  const addBuyer = (id) => {
+    setSelectedBuyers((prev) => (prev.includes(id) ? prev : [...prev, id]))
+  }
+
+  const removeBuyer = (id) => {
+    setSelectedBuyers((prev) => prev.filter((x) => x !== id))
+  }
+
+  const moveBuyer = (id, direction) => {
+    setSelectedBuyers((prev) => {
+      const index = prev.indexOf(id)
+      if (index < 0) return prev
+      const target = index + direction
+      if (target < 0 || target >= prev.length) return prev
+      const next = [...prev]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
   }
 
   const handleSubmit = (e) => {
@@ -87,6 +109,9 @@ export default function CampaignFormModal({
     'w-full px-4 py-2.5 text-sm border border-border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand'
 
   const activeBuyers = buyers.filter((b) => b.status === 'Active')
+  const buyersById = Object.fromEntries(activeBuyers.map((b) => [b.id, b]))
+  const selectedList = selectedBuyers.map((id) => buyersById[id]).filter(Boolean)
+  const availableBuyers = activeBuyers.filter((b) => !selectedBuyers.includes(b.id))
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -125,42 +150,103 @@ export default function CampaignFormModal({
           </FormRow>
 
           <FormRow label="Buyers">
-            <div className="space-y-2">
+            <div className="space-y-3">
               {activeBuyers.length === 0 ? (
                 <p className="text-xs text-gray-400">No active buyers. Add buyers first.</p>
               ) : (
-                activeBuyers.map((b) => (
-                  <label
-                    key={b.id}
-                    className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer py-1"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedBuyers.includes(b.id)}
-                      onChange={() => toggleBuyer(b.id)}
-                      className="rounded border-border text-brand focus:ring-brand/20 mt-0.5"
-                    />
-                    <span className="min-w-0">
-                      {b.name ? (
-                        <>
-                          <span className="font-medium text-gray-900">{b.name}</span>
-                          <span className="block font-mono text-xs text-gray-600 mt-0.5">
-                            {formatPhoneNumber(b.number)}
-                            <span className="text-gray-400 ml-2">P{b.priority}</span>
+                <>
+                  {selectedList.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Priority order (1st gets calls first)
+                      </p>
+                      {selectedList.map((buyer, index) => (
+                        <div
+                          key={buyer.id}
+                          className="flex items-start gap-2 p-3 rounded-xl border border-brand/20 bg-brand/5"
+                        >
+                          <span className="shrink-0 inline-flex items-center justify-center min-w-[5.5rem] px-2 py-1 rounded-lg bg-brand text-ink text-[11px] font-bold uppercase tracking-wide">
+                            {priorityLabel(index + 1)}
                           </span>
-                        </>
-                      ) : (
-                        <span className="font-mono text-gray-700">
-                          {formatPhoneNumber(b.number)}
-                          <span className="text-gray-400 text-xs ml-2">P{b.priority}</span>
-                        </span>
-                      )}
-                    </span>
-                  </label>
-                ))
+                          <div className="flex-1 min-w-0">
+                            {buyer.name ? (
+                              <>
+                                <p className="font-medium text-gray-900 text-sm">{buyer.name}</p>
+                                <p className="font-mono text-xs text-gray-600 mt-0.5">
+                                  {formatPhoneNumber(buyer.number)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="font-mono text-sm text-gray-700">{formatPhoneNumber(buyer.number)}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => moveBuyer(buyer.id, -1)}
+                              disabled={index === 0}
+                              className="p-1.5 rounded-lg border border-border text-gray-500 hover:bg-white disabled:opacity-30"
+                              aria-label="Move up"
+                            >
+                              <HiOutlineChevronUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveBuyer(buyer.id, 1)}
+                              disabled={index === selectedList.length - 1}
+                              className="p-1.5 rounded-lg border border-border text-gray-500 hover:bg-white disabled:opacity-30"
+                              aria-label="Move down"
+                            >
+                              <HiOutlineChevronDown className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeBuyer(buyer.id)}
+                              className="p-1.5 rounded-lg border border-border text-gray-500 hover:bg-white hover:text-red-600"
+                              aria-label="Remove buyer"
+                            >
+                              <HiOutlineX className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {availableBuyers.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {selectedList.length ? 'Add more buyers' : 'Select buyers'}
+                      </p>
+                      {availableBuyers.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => addBuyer(b.id)}
+                          className="w-full flex items-start gap-3 p-3 rounded-xl border border-border text-left hover:border-brand/40 hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="mt-0.5 w-4 h-4 rounded border border-border shrink-0" />
+                          <span className="min-w-0">
+                            {b.name ? (
+                              <>
+                                <span className="block font-medium text-gray-900 text-sm">{b.name}</span>
+                                <span className="block font-mono text-xs text-gray-600 mt-0.5">
+                                  {formatPhoneNumber(b.number)}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="font-mono text-sm text-gray-700">{formatPhoneNumber(b.number)}</span>
+                            )}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               <p className="text-xs text-gray-400">
-                Leave empty to use all active buyers. Strategy picks among selected buyers.
+                Order sets call priority: 1st is tried first, then 2nd, 3rd, and so on. Leave empty to use all active
+                buyers.
               </p>
             </div>
           </FormRow>

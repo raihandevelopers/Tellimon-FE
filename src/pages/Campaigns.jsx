@@ -47,12 +47,14 @@ export default function Campaigns() {
   const handleSubmit = async (data) => {
     const created = await api.createCampaign(data)
     setCampaigns((prev) => [created, ...prev])
+    setBuyers(await api.getBuyers())
     setModalOpen(false)
   }
 
   const handleUpdate = async (data) => {
     const updated = await api.updateCampaign(editCampaign.id, data)
     setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+    setBuyers(await api.getBuyers())
     setEditCampaign(null)
   }
 
