@@ -14,6 +14,7 @@ import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
 import { dedupeLiveCalls } from '../utils/dedupeLiveCalls'
 import { formatLiveDuration } from '../utils/formatLiveDuration'
+import { msUntilNextIstReset } from '../utils/istBusinessDay'
 
 function formatDidDisplay(number) {
   const d = String(number || '').replace(/\D/g, '')
@@ -32,6 +33,7 @@ export default function Dashboard() {
     totalCalls: 0,
     answered: 0,
     missed: 0,
+    period: null,
   })
 
   const loadStats = async () => {
@@ -58,7 +60,23 @@ export default function Dashboard() {
     loadStats()
     loadLiveCalls()
     const pollLive = setInterval(loadLiveCalls, 3000)
-    return () => clearInterval(pollLive)
+    const pollStats = setInterval(loadStats, 60000)
+    return () => {
+      clearInterval(pollLive)
+      clearInterval(pollStats)
+    }
+  }, [])
+
+  useEffect(() => {
+    let timer
+    const armResetTimer = () => {
+      timer = setTimeout(() => {
+        loadStats()
+        armResetTimer()
+      }, msUntilNextIstReset())
+    }
+    armResetTimer()
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -104,7 +122,8 @@ export default function Dashboard() {
       </div>
 
       <p className="text-xs text-gray-500">
-        Live calls sync every 3 seconds on the server. Call totals are all-time from Asterisk webhooks.
+        Call totals reset daily at 8:00 AM IST
+        {stats.period?.label ? ` — current period: ${stats.period.label}` : ''}. Live calls update every 3 seconds.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
