@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import Campaigns from './pages/Campaigns'
 import BlockedContacts from './pages/BlockedContacts'
 import Buyers from './pages/Buyers'
+import BuyerReports from './pages/BuyerReports'
 import Customers from './pages/Customers'
 import DIDManagement from './pages/DIDManagement'
 import CallReports from './pages/CallReports'
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="campaigns" element={<Campaigns />} />
             <Route path="blocked-contacts" element={<BlockedContacts />} />
             <Route path="buyers" element={<Buyers />} />
+            <Route path="buyer-reports" element={<BuyerReports />} />
             <Route
               path="customers"
               element={

@@ -38,6 +38,10 @@ export const api = {
   me: () => request('/auth/me'),
 
   getBuyers: () => request('/buyers'),
+  getBuyerReports: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/buyers/reports${q ? `?${q}` : ''}`)
+  },
   createBuyer: (body) => request('/buyers', { method: 'POST', body: JSON.stringify(body) }),
   updateBuyer: (id, body) => request(`/buyers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteBuyer: (id) => request(`/buyers/${id}`, { method: 'DELETE' }),

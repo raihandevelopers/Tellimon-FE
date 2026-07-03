@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { HiOutlinePlay, HiOutlineDownload, HiOutlineDocumentDownload } from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
@@ -49,6 +50,7 @@ function FilterField({ label, children }) {
 
 export default function CallReports() {
   const { isMaster } = useAuth()
+  const [searchParams] = useSearchParams()
   const [assignedDids, setAssignedDids] = useState([])
   const [data, setData] = useState({ calls: [], total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
@@ -133,6 +135,15 @@ export default function CallReports() {
   }
 
   useEffect(() => () => revokePlayerUrl(), [])
+
+  useEffect(() => {
+    const preset = searchParams.get('number')
+    if (preset) {
+      setNumberFilter(preset)
+      setNumberQuery(preset)
+      setPage(1)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const timer = setTimeout(() => setNumberQuery(numberFilter), 400)

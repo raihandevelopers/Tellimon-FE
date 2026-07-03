@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
@@ -17,10 +18,13 @@ export default function Buyers() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [callCounts, setCallCounts] = useState(new Map())
 
   const loadBuyers = async () => {
     try {
-      setBuyers(await api.getBuyers())
+      const [buyerList, reportData] = await Promise.all([api.getBuyers(), api.getBuyerReports()])
+      setBuyers(buyerList)
+      setCallCounts(new Map((reportData.reports || []).map((r) => [r.buyerId, r.totalCalls])))
     } catch (err) {
       console.error(err)
     } finally {
@@ -81,6 +85,12 @@ export default function Buyers() {
             <HiOutlinePlus className="w-4 h-4" />
             Create Buyer
           </PrimaryButton>
+          <Link
+            to="/buyer-reports"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold border border-border rounded-xl hover:bg-gray-50"
+          >
+            Buyer reports
+          </Link>
         </div>
 
         <div className="overflow-x-auto">
@@ -93,6 +103,7 @@ export default function Buyers() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Priority</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ring Timeout</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Concurrent</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total Calls</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Created</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Actions</th>
@@ -101,13 +112,13 @@ export default function Buyers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={10} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading buyers…
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={10}>
                     <EmptyState message="No buyers created yet." />
                   </td>
                 </tr>
@@ -120,6 +131,7 @@ export default function Buyers() {
                     <td className="px-5 py-3.5 text-gray-600">{buyer.priority}</td>
                     <td className="px-5 py-3.5 text-gray-600">{buyer.ringTimeout}s</td>
                     <td className="px-5 py-3.5 text-gray-600">{buyer.concurrentCalls}</td>
+                    <td className="px-5 py-3.5 font-semibold text-brand">{callCounts.get(buyer.id) ?? 0}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
