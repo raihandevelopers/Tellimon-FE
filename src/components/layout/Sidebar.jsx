@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import Logo from '../Logo'
 import { useAuth } from '../../context/AuthContext'
 import { navItemsForRole } from '../../config/navItems'
-import { SITE_NAME } from '../../config/site'
 
 export default function Sidebar({ open, onClose }) {
   const { isMaster } = useAuth()
@@ -28,13 +27,7 @@ export default function Sidebar({ open, onClose }) {
           <Logo wide variant="dark" />
         </div>
 
-        <div className="px-5 pt-4 pb-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-brand">
-            {SITE_NAME}
-          </p>
-        </div>
-
-        <nav className="flex-1 px-3 pb-6 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 pt-4 pb-6 space-y-0.5 overflow-y-auto">
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

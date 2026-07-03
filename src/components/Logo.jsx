@@ -30,7 +30,7 @@ export default function Logo({ size = 'md', variant = 'light', showText = false,
             : `${sizes[size] ?? sizes.md} w-auto object-contain shrink-0`
         }
       />
-      {(showText || wide) && (
+      {(showText) && (
         <div className={wide ? 'text-center' : ''}>
           <div
             className={`${s.title} font-bold tracking-wide lowercase leading-tight ${
