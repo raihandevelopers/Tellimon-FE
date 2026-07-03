@@ -12,7 +12,7 @@ import {
 import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
-import { dedupeLiveCalls } from '../utils/dedupeLiveCalls'
+import { useLiveCalls } from '../context/LiveCallsContext'
 import { formatLiveDuration } from '../utils/formatLiveDuration'
 import { msUntilNextIstReset } from '../utils/istBusinessDay'
 
@@ -25,9 +25,9 @@ function formatDidDisplay(number) {
 }
 
 export default function Dashboard() {
-  const [connected, setConnected] = useState(true)
-  const [liveCalls, setLiveCalls] = useState([])
+  const { liveCalls, count: liveCount, refetch: refetchLiveCalls } = useLiveCalls()
   const [, setTick] = useState(0)
+  const [connected, setConnected] = useState(true)
   const [stats, setStats] = useState({
     campaigns: 0,
     totalCalls: 0,
@@ -46,19 +46,11 @@ export default function Dashboard() {
     return data
   }
 
-  const loadLiveCalls = async () => {
-    const res = await api.getLiveCalls()
-    setLiveCalls(dedupeLiveCalls(res.calls || []))
-    setConnected(true)
-    setTick((t) => t + 1)
-    return res
-  }
-
   useEffect(() => {
     let cancelled = false
     async function init() {
       try {
-        await Promise.all([loadStats(), loadLiveCalls()])
+        await loadStats()
         if (!cancelled) {
           setLastRefreshedAt(new Date())
           setRefreshError('')
@@ -68,9 +60,6 @@ export default function Dashboard() {
       }
     }
     init()
-    const pollLive = setInterval(() => {
-      loadLiveCalls().catch(() => setLiveCalls([]))
-    }, 3000)
     const pollStats = setInterval(() => {
       loadStats()
         .then(() => setLastRefreshedAt(new Date()))
@@ -78,7 +67,6 @@ export default function Dashboard() {
     }, 60000)
     return () => {
       cancelled = true
-      clearInterval(pollLive)
       clearInterval(pollStats)
     }
   }, [])
@@ -110,9 +98,10 @@ export default function Dashboard() {
     setRefreshing(true)
     setRefreshError('')
     try {
-      await Promise.all([loadStats(), loadLiveCalls()])
+      await Promise.all([loadStats(), refetchLiveCalls()])
       setLastRefreshedAt(new Date())
       setConnected(true)
+      setTick((t) => t + 1)
     } catch (err) {
       setConnected(false)
       setRefreshError(err.message || 'Could not refresh stats')
@@ -133,7 +122,7 @@ export default function Dashboard() {
 
   const cards = [
     { label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck },
-    { label: 'Live Calls', value: liveCalls.length, icon: HiOutlineStatusOnline, live: true, to: '/live-calls' },
+    { label: 'Live Calls', value: liveCount, icon: HiOutlineStatusOnline, live: true, to: '/live-calls' },
     { label: 'Total Calls', value: stats.totalCalls, icon: HiOutlinePhone, to: '/call-reports' },
     { label: 'Answered Calls', value: stats.answered, icon: HiOutlineCheckCircle, to: '/call-reports' },
     { label: 'Missed Calls', value: stats.missed, icon: HiOutlinePhoneMissedCall, to: '/missed-calls' },
@@ -176,7 +165,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {cards.map((card) => (
           <div key={card.label} className="relative">
-            {card.live && liveCalls.length > 0 && (
+            {card.live && liveCount > 0 && (
               <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-brand animate-pulse" />
             )}
             <StatCard label={card.label} value={card.value} icon={card.icon} to={card.to} />

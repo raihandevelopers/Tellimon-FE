@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { api } from '../../api/client'
 import { formatMoney } from '../../utils/formatMoney'
 import Logo from '../Logo'
+import LiveCallsBadge from './LiveCallsBadge'
 
 export default function Header({ onMenuClick, sidebarOpen }) {
   const { user, logout, isMaster } = useAuth()
@@ -62,6 +63,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+        <LiveCallsBadge />
+
         {!isMaster && (
           <Link
             to="/wallet"
