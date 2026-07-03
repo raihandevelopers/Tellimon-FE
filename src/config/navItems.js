@@ -8,6 +8,7 @@ import {
   HiOutlineStatusOnline,
   HiOutlineClipboardList,
   HiOutlineUsers,
+  HiOutlineCurrencyDollar,
 } from 'react-icons/hi'
 
 export const navItems = [
@@ -16,6 +17,7 @@ export const navItems = [
   { to: '/blocked-contacts', label: 'Blocked Contacts', icon: HiOutlineBan },
   { to: '/buyers', label: 'Buyers', icon: HiOutlineUserGroup },
   { to: '/customers', label: 'Customers', icon: HiOutlineUsers, masterOnly: true },
+  { to: '/wallet', label: 'Wallet', icon: HiOutlineCurrencyDollar },
   { to: '/did-management', label: 'DID Management', icon: HiOutlinePhone, masterOnly: true },
   { to: '/call-reports', label: 'Call Reports', icon: HiOutlineChartBar },
   { to: '/live-calls', label: 'Live Calls', icon: HiOutlineStatusOnline },

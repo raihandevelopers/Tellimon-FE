@@ -89,4 +89,12 @@ export const api = {
     const q = new URLSearchParams(params).toString()
     return request(`/activity-logs${q ? `?${q}` : ''}`)
   },
+
+  getWallet: () => request('/wallet'),
+  getWalletTransactions: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/wallet/transactions${q ? `?${q}` : ''}`)
+  },
+  rechargeWallet: (body) => request('/wallet/recharge', { method: 'POST', body: JSON.stringify(body) }),
+  updateWalletRates: (body) => request('/wallet/rates', { method: 'PUT', body: JSON.stringify(body) }),
 }

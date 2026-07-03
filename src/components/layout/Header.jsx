@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
-import { HiOutlineBell, HiOutlineChevronDown, HiOutlineMenu, HiOutlineX } from 'react-icons/hi'
+import { Link } from 'react-router-dom'
+import { HiOutlineChevronDown, HiOutlineMenu, HiOutlineX, HiOutlineCurrencyDollar } from 'react-icons/hi'
 import { useAuth } from '../../context/AuthContext'
+import { api } from '../../api/client'
+import { formatMoney } from '../../utils/formatMoney'
 import Logo from '../Logo'
 
 export default function Header({ onMenuClick, sidebarOpen }) {
-  const { user, logout } = useAuth()
+  const { user, logout, isMaster } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [balance, setBalance] = useState(null)
   const menuRef = useRef(null)
 
   useEffect(() => {
@@ -17,6 +21,29 @@ export default function Header({ onMenuClick, sidebarOpen }) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  useEffect(() => {
+    if (isMaster || !user) return
+
+    let cancelled = false
+    async function loadBalance() {
+      try {
+        const data = await api.getWallet()
+        if (!cancelled) setBalance(data.balance)
+      } catch {
+        if (!cancelled) setBalance(user.walletBalance ?? 0)
+      }
+    }
+
+    loadBalance()
+    const timer = setInterval(loadBalance, 60000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [isMaster, user])
+
+  const displayBalance = balance ?? user?.walletBalance ?? 0
 
   return (
     <header className="h-20 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
@@ -35,16 +62,16 @@ export default function Header({ onMenuClick, sidebarOpen }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-        <button
-          type="button"
-          className="relative p-2 rounded-lg hover:bg-ink-soft text-gray-400 hover:text-brand transition-colors"
-          aria-label="Notifications"
-        >
-          <HiOutlineBell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-4 h-4 bg-brand text-ink text-[10px] font-bold rounded-full flex items-center justify-center">
-            1
-          </span>
-        </button>
+        {!isMaster && (
+          <Link
+            to="/wallet"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors"
+            title="Wallet balance"
+          >
+            <HiOutlineCurrencyDollar className="w-5 h-5 shrink-0" />
+            <span className="text-sm font-bold whitespace-nowrap">{formatMoney(displayBalance)}</span>
+          </Link>
+        )}
 
         <div className="relative" ref={menuRef}>
           <button

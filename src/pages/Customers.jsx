@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
+import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineCurrencyDollar } from 'react-icons/hi'
+import { formatMoney } from '../utils/formatMoney'
+import RechargeWalletModal from '../components/customers/RechargeWalletModal'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
@@ -27,6 +29,7 @@ export default function Customers() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [error, setError] = useState('')
+  const [rechargeCustomer, setRechargeCustomer] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -97,6 +100,20 @@ export default function Customers() {
     })
   }
 
+  const handleRecharge = async ({ amount, note }) => {
+    try {
+      await api.rechargeWallet({
+        customerId: rechargeCustomer.id,
+        amount,
+        note,
+      })
+      setRechargeCustomer(null)
+      load()
+    } catch (err) {
+      setError(err.message || 'Recharge failed')
+    }
+  }
+
   return (
     <>
       <InfoBanner>
@@ -134,6 +151,7 @@ export default function Customers() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Customer</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Email</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Assigned DIDs</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Wallet</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Created</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Actions</th>
               </tr>
@@ -141,13 +159,13 @@ export default function Customers() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading customers…
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <EmptyState message="No customer accounts yet." />
                   </td>
                 </tr>
@@ -161,9 +179,19 @@ export default function Customers() {
                         ? customer.assignedDids.map((d) => formatDid(d.number)).join(', ')
                         : '—'}
                     </td>
+                    <td className="px-5 py-3.5 font-semibold text-brand">{formatMoney(customer.walletBalance)}</td>
                     <td className="px-5 py-3.5 text-gray-500">{formatDate(customer.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setRechargeCustomer(customer)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10"
+                          aria-label="Recharge wallet"
+                          title="Recharge wallet"
+                        >
+                          <HiOutlineCurrencyDollar className="w-4 h-4" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => openEdit(customer)}
@@ -215,6 +243,13 @@ export default function Customers() {
         initial={editCustomer || undefined}
         mode="edit"
         dids={dids}
+      />
+
+      <RechargeWalletModal
+        open={Boolean(rechargeCustomer)}
+        onClose={() => setRechargeCustomer(null)}
+        onSubmit={handleRecharge}
+        customer={rechargeCustomer}
       />
     </>
   )

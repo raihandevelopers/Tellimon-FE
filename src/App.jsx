@@ -14,6 +14,7 @@ import CallReports from './pages/CallReports'
 import LiveCalls from './pages/LiveCalls'
 import MissedCalls from './pages/MissedCalls'
 import ActivityLogs from './pages/ActivityLogs'
+import Wallet from './pages/Wallet'
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="missed-calls" element={<MissedCalls />} />
             <Route path="live-calls" element={<LiveCalls />} />
             <Route path="activity-logs" element={<ActivityLogs />} />
+            <Route path="wallet" element={<Wallet />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
