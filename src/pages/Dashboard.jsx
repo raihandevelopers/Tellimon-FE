@@ -35,33 +35,49 @@ export default function Dashboard() {
     missed: 0,
     period: null,
   })
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(null)
+  const [refreshError, setRefreshError] = useState('')
 
   const loadStats = async () => {
-    try {
-      const data = await api.getDashboardStats()
-      setStats(data)
-      setConnected(true)
-    } catch {
-      setConnected(false)
-    }
+    const data = await api.getDashboardStats()
+    setStats(data)
+    setConnected(true)
+    return data
   }
 
   const loadLiveCalls = async () => {
-    try {
-      const res = await api.getLiveCalls()
-      setLiveCalls(dedupeLiveCalls(res.calls || []))
-      setConnected(true)
-    } catch {
-      setLiveCalls([])
-    }
+    const res = await api.getLiveCalls()
+    setLiveCalls(dedupeLiveCalls(res.calls || []))
+    setConnected(true)
+    setTick((t) => t + 1)
+    return res
   }
 
   useEffect(() => {
-    loadStats()
-    loadLiveCalls()
-    const pollLive = setInterval(loadLiveCalls, 3000)
-    const pollStats = setInterval(loadStats, 60000)
+    let cancelled = false
+    async function init() {
+      try {
+        await Promise.all([loadStats(), loadLiveCalls()])
+        if (!cancelled) {
+          setLastRefreshedAt(new Date())
+          setRefreshError('')
+        }
+      } catch {
+        if (!cancelled) setConnected(false)
+      }
+    }
+    init()
+    const pollLive = setInterval(() => {
+      loadLiveCalls().catch(() => setLiveCalls([]))
+    }, 3000)
+    const pollStats = setInterval(() => {
+      loadStats()
+        .then(() => setLastRefreshedAt(new Date()))
+        .catch(() => setConnected(false))
+    }, 60000)
     return () => {
+      cancelled = true
       clearInterval(pollLive)
       clearInterval(pollStats)
     }
@@ -70,8 +86,13 @@ export default function Dashboard() {
   useEffect(() => {
     let timer
     const armResetTimer = () => {
-      timer = setTimeout(() => {
-        loadStats()
+      timer = setTimeout(async () => {
+        try {
+          await loadStats()
+          setLastRefreshedAt(new Date())
+        } catch {
+          setConnected(false)
+        }
         armResetTimer()
       }, msUntilNextIstReset())
     }
@@ -85,10 +106,30 @@ export default function Dashboard() {
     return () => clearInterval(timer)
   }, [liveCalls.length])
 
-  const refreshAll = () => {
-    loadStats()
-    loadLiveCalls()
+  const refreshAll = async () => {
+    setRefreshing(true)
+    setRefreshError('')
+    try {
+      await Promise.all([loadStats(), loadLiveCalls()])
+      setLastRefreshedAt(new Date())
+      setConnected(true)
+    } catch (err) {
+      setConnected(false)
+      setRefreshError(err.message || 'Could not refresh stats')
+    } finally {
+      setRefreshing(false)
+    }
   }
+
+  const lastRefreshedLabel = lastRefreshedAt
+    ? lastRefreshedAt.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+    : null
 
   const cards = [
     { label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck },
@@ -114,16 +155,22 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={refreshAll}
-          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors"
+          disabled={refreshing}
+          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white border border-border text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-wait"
         >
-          Refresh stats
-          <HiOutlineRefresh className="w-3.5 h-3.5" />
+          {refreshing ? 'Refreshing…' : 'Refresh stats'}
+          <HiOutlineRefresh className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
+      {refreshError && (
+        <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2">{refreshError}</p>
+      )}
 
       <p className="text-xs text-gray-500">
         Call totals reset daily at 8:00 AM IST
         {stats.period?.label ? ` — current period: ${stats.period.label}` : ''}. Live calls update every 3 seconds.
+        {lastRefreshedLabel ? ` Last refreshed: ${lastRefreshedLabel} IST.` : ''}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
