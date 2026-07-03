@@ -70,10 +70,9 @@ export default function Customers() {
 
   const handleCreate = async (data) => {
     try {
-      const created = await api.createCustomer(data)
-      setCustomers((prev) => [created, ...prev])
+      await api.createCustomer(data)
       setModalOpen(false)
-      load()
+      await load()
     } catch (err) {
       setError(err.message || 'Failed to create customer')
     }
@@ -81,10 +80,9 @@ export default function Customers() {
 
   const handleUpdate = async (data) => {
     try {
-      const updated = await api.updateCustomer(editCustomer.id, data)
-      setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+      await api.updateCustomer(editCustomer.id, data)
       setEditCustomer(null)
-      load()
+      await load()
     } catch (err) {
       setError(err.message || 'Failed to update customer')
     }
@@ -243,6 +241,7 @@ export default function Customers() {
       </div>
 
       <CreateCustomerModal
+        key="create-customer"
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreate}
@@ -250,6 +249,7 @@ export default function Customers() {
       />
 
       <CreateCustomerModal
+        key={editCustomer?.id || 'edit-customer'}
         open={Boolean(editCustomer)}
         onClose={() => setEditCustomer(null)}
         onSubmit={handleUpdate}

@@ -46,11 +46,11 @@ export default function CreateCustomerModal({
       const existing = initialAssignments.find((a) => String(a.didId) === String(did.id))
       next[did.id] = {
         checked: Boolean(existing),
-        displayNumber: existing?.displayNumber || '',
+        displayNumber: existing?.displayNumber || did.displayNumber || '',
       }
     }
     setAssignments(next)
-  }, [open, dids, initial])
+  }, [open, dids, initial?.id, initial?.didAssignments])
 
   if (!open) return null
 
@@ -68,6 +68,7 @@ export default function CreateCustomerModal({
       name: form.get('name').trim(),
       email: form.get('email').trim(),
       didAssignments,
+      didIds: didAssignments.map((a) => a.didId),
     }
     const password = form.get('password')?.trim()
     if (mode === 'create' || password) payload.password = password
