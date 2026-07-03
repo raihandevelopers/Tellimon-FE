@@ -9,7 +9,7 @@ export default function LiveCallsBadge() {
   return (
     <Link
       to="/live-calls"
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-colors shrink-0 ${
+      className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border transition-colors shrink-0 ${
         active
           ? 'bg-brand/15 border-brand/40 text-brand hover:bg-brand/25'
           : 'bg-ink-soft border-border-dark text-gray-400 hover:text-brand hover:border-brand/30'
@@ -22,7 +22,7 @@ export default function LiveCallsBadge() {
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand animate-pulse" />
         )}
       </span>
-      <span className="text-sm font-bold whitespace-nowrap">
+      <span className="text-xs sm:text-sm font-bold whitespace-nowrap truncate">
         {loading ? '…' : count} live
       </span>
     </Link>

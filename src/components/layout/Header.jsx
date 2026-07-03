@@ -47,8 +47,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
   const displayBalance = balance ?? user?.walletBalance ?? 0
 
   return (
-    <header className="h-20 border-b border-border-dark bg-ink flex items-center justify-between px-4 sm:px-6 shrink-0 gap-3">
-      <div className="flex items-center gap-3 min-w-0 flex-1 lg:flex-none">
+    <header className="h-14 sm:h-16 lg:h-20 border-b border-border-dark bg-ink flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2 overflow-hidden">
+      <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-none">
         <button
           type="button"
           onClick={onMenuClick}
@@ -57,22 +57,22 @@ export default function Header({ onMenuClick, sidebarOpen }) {
         >
           {sidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
         </button>
-        <div className="lg:hidden flex-1 flex justify-center min-w-0">
-          <Logo size="lg" variant="dark" />
+        <div className="lg:hidden flex-1 flex justify-center min-w-0 max-h-full overflow-hidden px-1">
+          <Logo size="sm" variant="dark" />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+      <div className="flex items-center gap-1.5 sm:gap-4 ml-auto shrink-0">
         <LiveCallsBadge />
 
         {!isMaster && (
           <Link
             to="/wallet"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors shrink-0"
             title="Wallet balance"
           >
             <HiOutlineCurrencyDollar className="w-5 h-5 shrink-0" />
-            <span className="text-sm font-bold whitespace-nowrap">{formatMoney(displayBalance)}</span>
+            <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatMoney(displayBalance)}</span>
           </Link>
         )}
 

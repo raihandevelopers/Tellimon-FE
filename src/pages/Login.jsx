@@ -53,7 +53,7 @@ export default function Login() {
               <div>Live Monitoring</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-brand">Twilio</div>
+              <div className="text-2xl font-bold text-brand">Routing</div>
               <div>Ready</div>
             </div>
             <div className="text-center">
@@ -143,11 +143,6 @@ export default function Login() {
                 {loading ? 'Signing in…' : 'Sign in'}
               </PrimaryButton>
             </form>
-
-            <p className="mt-6 text-center text-xs text-gray-400">
-              Demo credentials: <span className="font-medium text-gray-500">demo@tellimon.com</span> /{' '}
-              <span className="font-medium text-gray-500">demo123</span>
-            </p>
           </div>
         </div>
       </div>
