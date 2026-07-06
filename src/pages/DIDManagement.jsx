@@ -25,7 +25,7 @@ export default function DIDManagement() {
   const [editDid, setEditDid] = useState(null)
   const [form, setForm] = useState({
     number: '',
-    trunk: '8138073157',
+    trunk: '7905442903',
     campaignId: '',
     buyerId: '',
     status: 'Active',
@@ -78,7 +78,7 @@ export default function DIDManagement() {
       setModalOpen(false)
       setForm({
         number: '',
-        trunk: '8138073157',
+        trunk: '7905442903',
         campaignId: '',
         buyerId: '',
         status: 'Active',
@@ -101,7 +101,7 @@ export default function DIDManagement() {
     setEditDid(did)
     setForm({
       number: did.number,
-      trunk: did.trunk || '8138073157',
+      trunk: did.trunk || '7905442903',
       campaignId: did.campaignId || '',
       buyerId: did.buyerId || '',
       status: did.status || 'Active',

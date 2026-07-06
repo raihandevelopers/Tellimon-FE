@@ -304,7 +304,7 @@ export default function CallReports() {
             </FilterField>
             <FilterField label="Number (caller, DID, or buyer)">
               <SearchInput
-                placeholder="e.g. 8138073157"
+                placeholder="e.g. 7905442903"
                 value={numberFilter}
                 onChange={(e) => {
                   setNumberFilter(e.target.value)
