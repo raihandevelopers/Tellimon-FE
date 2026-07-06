@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { formatMoney } from '../../utils/formatMoney'
+import { formatWalletBalance } from '../../utils/formatMoney'
 
 export default function RechargeWalletModal({ open, onClose, onSubmit, customer }) {
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function RechargeWalletModal({ open, onClose, onSubmit, customer 
             <p className="text-sm font-medium text-gray-900">{customer.name}</p>
             <p className="text-xs text-gray-500">{customer.email}</p>
             <p className="text-sm text-brand font-semibold mt-2">
-              Current balance: {formatMoney(customer.walletBalance ?? customer.balance ?? 0)}
+              Current balance: {formatWalletBalance(customer.walletBalance ?? customer.balance ?? 0)}
             </p>
           </div>
 

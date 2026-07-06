@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { HiOutlineChevronDown, HiOutlineMenu, HiOutlineX, HiOutlineCurrencyDollar } from 'react-icons/hi'
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../api/client'
-import { formatMoney } from '../../utils/formatMoney'
+import { formatWalletBalance } from '../../utils/formatMoney'
 import Logo from '../Logo'
 import LiveCallsBadge from './LiveCallsBadge'
 
@@ -72,7 +72,7 @@ export default function Header({ onMenuClick, sidebarOpen }) {
             title="Wallet balance"
           >
             <HiOutlineCurrencyDollar className="w-5 h-5 shrink-0" />
-            <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatMoney(displayBalance)}</span>
+            <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatWalletBalance(displayBalance)}</span>
           </Link>
         )}
 

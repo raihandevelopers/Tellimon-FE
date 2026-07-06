@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { HiOutlineCurrencyDollar, HiOutlinePlus } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../api/client'
-import { formatMoney } from '../utils/formatMoney'
+import { formatMoney, formatWalletBalance } from '../utils/formatMoney'
 import { formatDateTime } from '../utils/formatDate'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
@@ -127,7 +127,7 @@ export default function Wallet() {
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total customer balance</p>
               <p className="text-3xl font-bold text-ink mt-2 flex items-center gap-2">
                 <HiOutlineCurrencyDollar className="w-8 h-8 text-brand" />
-                {formatMoney(summary?.totalCustomerBalance)}
+                {formatWalletBalance(summary?.totalCustomerBalance)}
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-border p-5 ring-1 ring-brand/5">
@@ -172,7 +172,7 @@ export default function Wallet() {
                       <tr key={customer.id} className="hover:bg-gray-50/50">
                         <td className="px-5 py-3.5 font-medium text-gray-900">{customer.name}</td>
                         <td className="px-5 py-3.5 text-gray-600">{customer.email}</td>
-                        <td className="px-5 py-3.5 font-semibold text-brand">{formatMoney(customer.balance)}</td>
+                        <td className="px-5 py-3.5 font-semibold text-brand">{formatWalletBalance(customer.balance)}</td>
                         <td className="px-5 py-3.5">
                           <PrimaryButton
                             type="button"
@@ -197,7 +197,7 @@ export default function Wallet() {
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Available balance</p>
             <p className="text-4xl font-bold text-ink mt-2 flex items-center gap-2">
               <HiOutlineCurrencyDollar className="w-10 h-10 text-brand" />
-              {formatMoney(summary?.balance)}
+              {formatWalletBalance(summary?.balance)}
             </p>
           </div>
           <WalletCallRatesPanel rates={summary?.callRates} />
@@ -291,7 +291,7 @@ export default function Wallet() {
                       {tx.type === 'credit' ? '+' : '-'}
                       {formatMoney(tx.amount)}
                     </td>
-                    <td className="px-5 py-3.5 text-gray-700">{formatMoney(tx.balanceAfter)}</td>
+                    <td className="px-5 py-3.5 text-gray-700">{formatWalletBalance(tx.balanceAfter)}</td>
                     <td className="px-5 py-3.5 text-gray-600 max-w-xs truncate" title={tx.description}>
                       {tx.description || '—'}
                     </td>

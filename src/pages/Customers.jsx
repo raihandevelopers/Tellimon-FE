@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineCurrencyDollar } from 'react-icons/hi'
-import { formatMoney } from '../utils/formatMoney'
+import { formatWalletBalance } from '../utils/formatMoney'
 import RechargeWalletModal from '../components/customers/RechargeWalletModal'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
@@ -190,7 +190,7 @@ export default function Customers() {
                             .join(', ')
                         : '—'}
                     </td>
-                    <td className="px-5 py-3.5 font-semibold text-brand">{formatMoney(customer.walletBalance)}</td>
+                    <td className="px-5 py-3.5 font-semibold text-brand">{formatWalletBalance(customer.walletBalance)}</td>
                     <td className="px-5 py-3.5 text-gray-500">{formatDate(customer.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
