@@ -85,12 +85,12 @@ export default function ActivityLogs() {
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5">
-        <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between border-b border-border">
+        <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between border-b border-border">
           <SearchInput
             placeholder="Search logs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="lg:max-w-xs flex-1"
+            className="md:max-w-xs flex-1 w-full"
           />
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
@@ -114,7 +114,7 @@ export default function ActivityLogs() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[800px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-b border-border">
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 w-10" />
@@ -151,7 +151,9 @@ export default function ActivityLogs() {
                       <td className="px-5 py-3.5 font-medium text-gray-900 capitalize whitespace-nowrap">
                         {formatAction(log.action)}
                       </td>
-                      <td className="px-5 py-3.5 text-gray-600 max-w-md">{log.description}</td>
+                      <td className="px-5 py-3.5 text-gray-600 max-w-md truncate" title={log.description}>
+                        {log.description}
+                      </td>
                       <td className="px-5 py-3.5 text-gray-700 whitespace-nowrap">{log.actorName}</td>
                       <td className="px-5 py-3.5">
                         <span

@@ -343,12 +343,12 @@ export default function CallReports() {
                 </>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               {hasFilters && (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 border border-border rounded-xl hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 border border-border rounded-xl hover:bg-gray-50 w-full sm:w-auto"
                 >
                   Clear filters
                 </button>
@@ -357,7 +357,7 @@ export default function CallReports() {
                 type="button"
                 onClick={() => setExportOpen(true)}
                 disabled={exporting || loading}
-                className="shrink-0"
+                className="w-full sm:w-auto shrink-0"
               >
                 <HiOutlineDocumentDownload className="w-5 h-5" />
                 Export to Excel
@@ -367,7 +367,7 @@ export default function CallReports() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Caller</th>
@@ -375,7 +375,7 @@ export default function CallReports() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Duration</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Time</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Time</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Recording</th>
               </tr>
             </thead>
@@ -401,10 +401,10 @@ export default function CallReports() {
               ) : (
                 calls.map((call) => (
                   <tr key={call.id} className="border-b border-border hover:bg-gray-50/50">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{call.caller}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{call.did || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{call.buyerNumber || '—'}</td>
-                    <td className="px-5 py-3.5 font-mono text-gray-700">{call.durationFormatted || '0:00'}</td>
+                    <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[8rem] truncate">{call.caller}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[8rem] truncate">{call.did || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[8rem] truncate">{call.buyerNumber || '—'}</td>
+                    <td className="px-5 py-3.5 font-mono text-gray-700 whitespace-nowrap">{call.durationFormatted || '0:00'}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -414,10 +414,10 @@ export default function CallReports() {
                         {call.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDateTime(call.startedAt || call.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDateTime(call.startedAt || call.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       {call.recordingUrl ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => playRecording(call)}

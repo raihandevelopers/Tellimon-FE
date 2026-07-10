@@ -70,7 +70,7 @@ export default function Login() {
             <Logo size="xl" />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg border border-border p-8 ring-1 ring-brand/10">
+          <div className="bg-white rounded-2xl shadow-lg border border-border p-5 sm:p-8 ring-1 ring-brand/10">
             <h2 className="text-2xl font-bold text-ink mb-1">Welcome back</h2>
             <p className="text-sm text-gray-500 mb-8">Sign in to {SITE_NAME}</p>
 
@@ -119,7 +119,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -128,7 +128,7 @@ export default function Login() {
                   />
                   <span className="text-sm text-gray-600">Remember me</span>
                 </label>
-                <button type="button" className="text-sm text-brand hover:text-brand-dark font-medium">
+                <button type="button" className="text-sm text-brand hover:text-brand-dark font-medium text-left sm:text-right">
                   Forgot password?
                 </button>
               </div>

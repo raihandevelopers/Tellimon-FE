@@ -127,7 +127,7 @@ export default function Customers() {
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
-        <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
           <SearchInput
             placeholder="Search customers..."
             value={search}
@@ -135,9 +135,9 @@ export default function Customers() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="lg:max-w-xs flex-1"
+            className="w-full lg:max-w-xs flex-1"
           />
-          <PrimaryButton onClick={() => setModalOpen(true)}>
+          <PrimaryButton onClick={() => setModalOpen(true)} className="w-full sm:w-auto shrink-0">
             <HiOutlinePlus className="w-4 h-4" />
             Create Customer
           </PrimaryButton>
@@ -150,12 +150,12 @@ export default function Customers() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[800px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Customer</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Email</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Assigned DIDs</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Assigned DIDs</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Wallet</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Created</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Actions</th>
@@ -177,21 +177,33 @@ export default function Customers() {
               ) : (
                 paginated.map((customer) => (
                   <tr key={customer.id} className="hover:bg-gray-50/50">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{customer.name}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{customer.email}</td>
-                    <td className="px-5 py-3.5 text-gray-600">
-                      {customer.assignedDids?.length
-                        ? customer.assignedDids
-                            .map((d) =>
-                              d.displayNumber
+                    <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[10rem] truncate">{customer.name}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[12rem] truncate">{customer.email}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[14rem]">
+                      {customer.assignedDids?.length ? (
+                        <div className="flex flex-wrap gap-1">
+                          {customer.assignedDids.map((d) => (
+                            <span
+                              key={d.id}
+                              className="inline-flex px-2 py-0.5 rounded-md text-xs bg-gray-50 border border-border truncate max-w-full"
+                              title={
+                                d.displayNumber
+                                  ? `${formatDid(d.number)} → ${formatDid(d.displayNumber)}`
+                                  : formatDid(d.number)
+                              }
+                            >
+                              {d.displayNumber
                                 ? `${formatDid(d.number)} → ${formatDid(d.displayNumber)}`
-                                : formatDid(d.number)
-                            )
-                            .join(', ')
-                        : '—'}
+                                : formatDid(d.number)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        '—'
+                      )}
                     </td>
-                    <td className="px-5 py-3.5 font-semibold text-brand">{formatWalletBalance(customer.walletBalance)}</td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDate(customer.createdAt)}</td>
+                    <td className="px-5 py-3.5 font-semibold text-brand whitespace-nowrap">{formatWalletBalance(customer.walletBalance)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(customer.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <button

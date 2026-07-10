@@ -172,7 +172,7 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 mt-6 pt-5 border-t border-border">
             <button
               type="button"
               onClick={onClose}

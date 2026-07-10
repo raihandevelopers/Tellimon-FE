@@ -3,13 +3,15 @@ import { SITE_NAME, SITE_TAGLINE } from '../config/site'
 
 export default function Logo({ size = 'md', variant = 'light', showText = false, wide = false }) {
   const sizes = {
-    sm: 'h-12',
+    xs: 'h-8',
+    sm: 'h-10 sm:h-12',
     md: 'h-20',
     lg: 'h-28',
     xl: 'h-40',
     '2xl': 'h-56',
   }
   const textSizes = {
+    xs: { title: 'text-xs', subtitle: 'text-[9px]' },
     sm: { title: 'text-sm', subtitle: 'text-[10px]' },
     md: { title: 'text-base', subtitle: 'text-[11px]' },
     lg: { title: 'text-xl', subtitle: 'text-xs' },

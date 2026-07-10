@@ -47,12 +47,12 @@ export default function LiveCalls() {
         Shows calls active on Asterisk. Server syncs every 3 seconds via PM2 on the VPS.
       </InfoBanner>
 
-      <div className="flex items-center gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-ink">Live Calls</h1>
           <p className="text-sm text-gray-500 mt-1">Active calls on your Asterisk server (refreshes every 3s)</p>
         </div>
-        <span className="ml-auto flex items-center gap-2 text-sm text-brand font-medium">
+        <span className="flex items-center gap-2 text-sm text-brand font-medium shrink-0">
           <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
           {calls.length} active
         </span>
@@ -69,27 +69,27 @@ export default function LiveCalls() {
           {calls.map((call) => (
             <div
               key={call.id || call.channelId}
-              className="bg-white rounded-2xl border border-border shadow-sm p-5 flex items-center gap-4 ring-1 ring-brand/5"
+              className="bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5 flex items-start sm:items-center gap-3 sm:gap-4 ring-1 ring-brand/5"
             >
-              <div className="p-3 rounded-xl bg-brand-light text-brand">
+              <div className="p-3 rounded-xl bg-brand-light text-brand shrink-0">
                 <HiOutlinePhone className="w-5 h-5" />
               </div>
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-sm min-w-0">
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Caller</p>
-                  <p className="font-medium text-ink mt-0.5">{call.caller || '—'}</p>
+                  <p className="font-medium text-ink mt-0.5 truncate">{call.caller || '—'}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">DID</p>
-                  <p className="font-medium text-ink mt-0.5">{formatDidDisplay(call.did)}</p>
+                  <p className="font-medium text-ink mt-0.5 truncate">{formatDidDisplay(call.did)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
                   <p className="font-medium text-ink mt-0.5">{formatLiveDuration(call.startedAt)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Route</p>
-                  <p className="font-medium text-ink mt-0.5">{call.route || 'xolo-endpoint'}</p>
+                  <p className="font-medium text-ink mt-0.5 truncate">{call.route || 'xolo-endpoint'}</p>
                 </div>
               </div>
             </div>

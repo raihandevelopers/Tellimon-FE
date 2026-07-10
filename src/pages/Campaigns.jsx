@@ -71,7 +71,7 @@ export default function Campaigns() {
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
-        <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
           <SearchInput
             placeholder="Search campaigns..."
             value={search}
@@ -79,22 +79,22 @@ export default function Campaigns() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="lg:max-w-xs flex-1"
+            className="w-full lg:max-w-xs flex-1"
           />
-          <PrimaryButton onClick={() => setModalOpen(true)}>
+          <PrimaryButton onClick={() => setModalOpen(true)} className="w-full sm:w-auto shrink-0">
             <HiOutlinePlus className="w-4 h-4" />
             Create Campaign
           </PrimaryButton>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[850px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Campaign Name</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Campaign Name</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyers</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Strategy</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Duplicate Handling</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Duplicate Handling</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Created</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Actions</th>
@@ -116,14 +116,14 @@ export default function Campaigns() {
               ) : (
                 paginated.map((campaign) => (
                   <tr key={campaign.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{campaign.name}</td>
-                    <td className="px-5 py-3.5 text-gray-600">
+                    <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[12rem] truncate">{campaign.name}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">
                       {(campaign.buyerIds?.length || 0) > 0
                         ? `${campaign.buyerIds.length} assigned`
                         : 'All active'}
                     </td>
-                    <td className="px-5 py-3.5 text-gray-600">{campaign.strategy}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{campaign.duplicateHandling}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{campaign.strategy}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{campaign.duplicateHandling}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -135,7 +135,7 @@ export default function Campaigns() {
                         {campaign.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDate(campaign.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(campaign.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <button

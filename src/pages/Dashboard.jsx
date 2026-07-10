@@ -174,8 +174,8 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm ring-1 ring-brand/5 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-5 py-4 border-b border-border">
+          <div className="min-w-0">
             <h2 className="text-sm font-bold text-ink">Active calls now</h2>
             <p className="text-xs text-gray-500 mt-0.5">Updates automatically while calls are in progress</p>
           </div>

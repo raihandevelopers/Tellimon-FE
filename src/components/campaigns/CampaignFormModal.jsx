@@ -163,24 +163,25 @@ export default function CampaignFormModal({
                       {selectedList.map((buyer, index) => (
                         <div
                           key={buyer.id}
-                          className="flex items-start gap-2 p-3 rounded-xl border border-brand/20 bg-brand/5"
+                          className="flex flex-col sm:flex-row sm:items-start gap-2 p-3 rounded-xl border border-brand/20 bg-brand/5"
                         >
-                          <span className="shrink-0 inline-flex items-center justify-center min-w-[5.5rem] px-2 py-1 rounded-lg bg-brand text-ink text-[11px] font-bold uppercase tracking-wide">
-                            {priorityLabel(index + 1)}
+                          <span className="shrink-0 inline-flex items-center justify-center min-w-0 sm:min-w-[5.5rem] px-2 py-1 rounded-lg bg-brand text-ink text-[11px] font-bold uppercase tracking-wide w-fit">
+                            <span className="sm:hidden">#{index + 1}</span>
+                            <span className="hidden sm:inline">{priorityLabel(index + 1)}</span>
                           </span>
                           <div className="flex-1 min-w-0">
                             {buyer.name ? (
                               <>
-                                <p className="font-medium text-gray-900 text-sm">{buyer.name}</p>
-                                <p className="font-mono text-xs text-gray-600 mt-0.5">
+                                <p className="font-medium text-gray-900 text-sm truncate">{buyer.name}</p>
+                                <p className="font-mono text-xs text-gray-600 mt-0.5 truncate">
                                   {formatPhoneNumber(buyer.number)}
                                 </p>
                               </>
                             ) : (
-                              <p className="font-mono text-sm text-gray-700">{formatPhoneNumber(buyer.number)}</p>
+                              <p className="font-mono text-sm text-gray-700 truncate">{formatPhoneNumber(buyer.number)}</p>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto">
                             <button
                               type="button"
                               onClick={() => moveBuyer(buyer.id, -1)}
@@ -287,7 +288,7 @@ export default function CampaignFormModal({
             <Toggle id="campaign-active" checked={active} onChange={setActive} />
           </FormRow>
 
-          <div className="flex items-center justify-end gap-3 py-5">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 py-5">
             <button
               type="button"
               onClick={onClose}

@@ -71,7 +71,7 @@ export default function Buyers() {
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
-        <div className="p-5 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+        <div className="p-4 sm:p-5 flex flex-col gap-3 sm:gap-4">
           <SearchInput
             placeholder="Search buyers..."
             value={search}
@@ -79,31 +79,33 @@ export default function Buyers() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="lg:max-w-xs flex-1"
+            className="w-full lg:max-w-xs"
           />
-          <PrimaryButton onClick={() => setModalOpen(true)}>
-            <HiOutlinePlus className="w-4 h-4" />
-            Create Buyer
-          </PrimaryButton>
-          <Link
-            to="/buyer-reports"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold border border-border rounded-xl hover:bg-gray-50"
-          >
-            Buyer reports
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto lg:ml-auto">
+            <PrimaryButton onClick={() => setModalOpen(true)} className="w-full sm:w-auto">
+              <HiOutlinePlus className="w-4 h-4" />
+              Create Buyer
+            </PrimaryButton>
+            <Link
+              to="/buyer-reports"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold border border-border rounded-xl hover:bg-gray-50 w-full sm:w-auto"
+            >
+              Buyer reports
+            </Link>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer Name</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer Number</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Daily Cap</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Name</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Number</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Daily Cap</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Priority</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ring Timeout</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Ring Timeout</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Concurrent</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Total Calls</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Total Calls</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Created</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Actions</th>
@@ -125,13 +127,13 @@ export default function Buyers() {
               ) : (
                 paginated.map((buyer) => (
                   <tr key={buyer.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{buyer.name || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-700">{buyer.number}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{buyer.dailyCap}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{buyer.priority}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{buyer.ringTimeout}s</td>
-                    <td className="px-5 py-3.5 text-gray-600">{buyer.concurrentCalls}</td>
-                    <td className="px-5 py-3.5 font-semibold text-brand">{callCounts.get(buyer.id) ?? 0}</td>
+                    <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[10rem] truncate">{buyer.name || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-700 whitespace-nowrap">{buyer.number}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.dailyCap}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.priority}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.ringTimeout}s</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.concurrentCalls}</td>
+                    <td className="px-5 py-3.5 font-semibold text-brand whitespace-nowrap">{callCounts.get(buyer.id) ?? 0}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -145,7 +147,7 @@ export default function Buyers() {
                         {buyer.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDate(buyer.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDate(buyer.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <button

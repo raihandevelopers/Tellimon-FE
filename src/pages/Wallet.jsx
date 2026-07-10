@@ -143,7 +143,7 @@ export default function Wallet() {
               <h2 className="text-sm font-bold uppercase tracking-wide text-ink">Customer balances</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[700px] text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-left border-b border-border">
                     <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
@@ -170,14 +170,14 @@ export default function Wallet() {
                   ) : (
                     summary.customers.map((customer) => (
                       <tr key={customer.id} className="hover:bg-gray-50/50">
-                        <td className="px-5 py-3.5 font-medium text-gray-900">{customer.name}</td>
-                        <td className="px-5 py-3.5 text-gray-600">{customer.email}</td>
-                        <td className="px-5 py-3.5 font-semibold text-brand">{formatWalletBalance(customer.balance)}</td>
+                        <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[10rem] truncate">{customer.name}</td>
+                        <td className="px-5 py-3.5 text-gray-600 max-w-[12rem] truncate">{customer.email}</td>
+                        <td className="px-5 py-3.5 font-semibold text-brand whitespace-nowrap">{formatWalletBalance(customer.balance)}</td>
                         <td className="px-5 py-3.5">
                           <PrimaryButton
                             type="button"
                             onClick={() => setRechargeCustomer({ ...customer, walletBalance: customer.balance })}
-                            className="!py-1.5 !px-3 !text-xs"
+                            className="!py-1.5 !px-3 !text-xs whitespace-nowrap"
                           >
                             <HiOutlinePlus className="w-3.5 h-3.5" />
                             Recharge
@@ -193,11 +193,11 @@ export default function Wallet() {
         </>
       ) : (
         <>
-          <div className="bg-white rounded-2xl border border-border p-8 ring-1 ring-brand/5">
+          <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 ring-1 ring-brand/5">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Available balance</p>
-            <p className="text-4xl font-bold text-ink mt-2 flex items-center gap-2">
-              <HiOutlineCurrencyDollar className="w-10 h-10 text-brand" />
-              {formatWalletBalance(summary?.balance)}
+            <p className="text-3xl sm:text-4xl font-bold text-ink mt-2 flex items-center gap-2 min-w-0">
+              <HiOutlineCurrencyDollar className="w-8 h-8 sm:w-10 sm:h-10 text-brand shrink-0" />
+              <span className="truncate">{formatWalletBalance(summary?.balance)}</span>
             </p>
           </div>
           <WalletCallRatesPanel rates={summary?.callRates} />
@@ -215,7 +215,7 @@ export default function Wallet() {
                   setCustomerFilter(e.target.value)
                   setPage(1)
                 }}
-                className="px-3 py-2 text-sm border border-border rounded-xl bg-white"
+                className="px-3 py-2 text-sm border border-border rounded-xl bg-white w-full sm:w-auto"
               >
                 <option value="">All customers</option>
                 {(summary?.customers || []).map((c) => (
@@ -235,7 +235,7 @@ export default function Wallet() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[800px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-b border-border">
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Date</th>

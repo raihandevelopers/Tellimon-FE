@@ -61,11 +61,11 @@ export default function WalletCallRatesPanel({ rates, editable = false, onSave }
               Missed calls with 0s talk time are not charged.
             </p>
           </div>
-          <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border">
-            <PrimaryButton type="submit" disabled={saving}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-5 pt-4 border-t border-border">
+            <PrimaryButton type="submit" disabled={saving} className="w-full sm:w-auto">
               {saving ? 'Saving…' : 'Save rate'}
             </PrimaryButton>
-            {saved && <span className="text-sm text-green-600">Rate saved</span>}
+            {saved && <span className="text-sm text-green-600 text-center sm:text-left">Rate saved</span>}
           </div>
         </form>
       ) : (

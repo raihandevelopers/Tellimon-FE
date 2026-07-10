@@ -77,73 +77,11 @@ if [ -f "${SCRIPT_DIR}/tellimon-live-sync-daemon.sh" ]; then
   chmod +x /usr/local/bin/tellimon-live-sync-daemon.sh
 fi
 
-cat > /usr/local/bin/tellimon-live-sync.sh <<'LIVEEOF'
-#!/bin/bash
-set -euo pipefail
-CONF=/etc/tellimon/config
-# shellcheck disable=SC1090
-source "$CONF"
-export USER_ID WEBHOOK_SECRET API_BASE
-TMP=$(mktemp)
-asterisk -rx 'core show channels concise' 2>/dev/null | grep '^PJSIP' > "$TMP" || true
-python3 - "$TMP" << 'PY'
-import json, sys, os, subprocess
-from datetime import datetime, timezone, timedelta
-
-path = sys.argv[1]
-calls = []
-buyer = ''
-try:
-    with open('/etc/tellimon/buyer.number') as f:
-        buyer = f.read().strip()
-except OSError:
-    pass
-
-now = datetime.now(timezone.utc)
-
-with open(path) as f:
-    for line in f:
-        parts = line.strip().split('!')
-        if len(parts) < 3:
-            continue
-        channel_id, context, exten = parts[0], parts[1], parts[2]
-        if 'PJSIP' not in channel_id:
-            continue
-        if context != 'from-trunk':
-            continue
-        caller = parts[7] if len(parts) > 7 else ''
-        did = exten
-        duration_sec = 0
-        for idx in (13, 12, 11, 10):
-            if len(parts) > idx and parts[idx]:
-                try:
-                    duration_sec = max(0, int(float(parts[idx])))
-                    break
-                except (ValueError, TypeError):
-                    continue
-        started_at = (now - timedelta(seconds=duration_sec)).isoformat()
-        calls.append({
-            'channelId': channel_id,
-            'caller': caller,
-            'did': did,
-            'buyerNumber': buyer,
-            'route': 'xolo-endpoint',
-            'startedAt': started_at,
-        })
-
-user_id = os.environ.get('USER_ID', '')
-secret = os.environ.get('WEBHOOK_SECRET', '')
-api = os.environ.get('API_BASE', '').rstrip('/')
-url = f"{api}/calls/live-sync"
-payload = json.dumps({'userId': user_id, 'calls': calls})
-cmd = ['curl', '-s', '-X', 'POST', url, '-H', 'Content-Type: application/json']
-if secret:
-    cmd += ['-H', f'x-asterisk-secret: {secret}']
-cmd += ['-d', payload]
-subprocess.run(cmd, check=False)
-PY
-rm -f "$TMP"
-LIVEEOF
+if [ -f "${SCRIPT_DIR}/tellimon-live-sync.sh" ]; then
+  cp "${SCRIPT_DIR}/tellimon-live-sync.sh" /usr/local/bin/tellimon-live-sync.sh
+else
+  echo "WARN: tellimon-live-sync.sh missing next to setup script" >&2
+fi
 chmod +x /usr/local/bin/tellimon-live-sync.sh
 
 if [ -f "${SCRIPT_DIR}/tellimon-pick-buyer.py" ]; then
@@ -212,6 +150,8 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,System(mkdir -p ${MONITOR_DIR})
  same => n,Set(START=${EPOCH})
  same => n,MixMonitor(${MONITOR_DIR}/${REC_FILE}.wav,b)
+ same => n,Set(CALLERID(num)=${CALLER})
+ same => n,Set(CALLERID(name)=${CALLER})
  same => n,Dial(PJSIP/${BUYER}@xolo-endpoint,${RING_TIMEOUT})
  same => n,Set(END=${EPOCH})
  same => n,Set(DURATION=$[${END}-${START}])

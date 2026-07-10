@@ -163,16 +163,16 @@ export default function CreateCustomerModal({
                   const state = assignments[did.id] || { checked: false, displayNumber: '' }
                   return (
                     <div key={did.id} className="px-4 py-3 space-y-2">
-                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <label className="flex items-center gap-3 text-sm cursor-pointer min-w-0">
                         <input
                           type="checkbox"
                           checked={state.checked}
                           onChange={(e) => toggleDid(did.id, e.target.checked)}
-                          className="rounded border-border"
+                          className="rounded border-border shrink-0"
                         />
-                        <span className="font-medium text-gray-900">{formatDid(did.number)}</span>
+                        <span className="font-medium text-gray-900 truncate min-w-0">{formatDid(did.number)}</span>
                         {did.customerName && !state.checked && (
-                          <span className="text-xs text-amber-600 ml-auto">→ {did.customerName}</span>
+                          <span className="text-xs text-amber-600 ml-auto shrink-0 truncate max-w-[40%]">→ {did.customerName}</span>
                         )}
                       </label>
                       {state.checked && (
@@ -196,7 +196,7 @@ export default function CreateCustomerModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-border">
             <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm border rounded-xl">
               Cancel
             </button>

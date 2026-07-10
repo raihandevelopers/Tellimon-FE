@@ -47,8 +47,8 @@ export default function Header({ onMenuClick, sidebarOpen }) {
   const displayBalance = balance ?? user?.walletBalance ?? 0
 
   return (
-    <header className="relative z-40 h-14 sm:h-16 lg:h-20 border-b border-border-dark bg-ink flex items-center justify-between px-3 sm:px-6 shrink-0 gap-2">
-      <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-none">
+    <header className="relative z-40 h-14 sm:h-16 lg:h-20 border-b border-border-dark bg-ink flex items-center justify-between px-3 sm:px-6 shrink-0 gap-1.5 sm:gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 lg:flex-none">
         <button
           type="button"
           onClick={onMenuClick}
@@ -57,22 +57,24 @@ export default function Header({ onMenuClick, sidebarOpen }) {
         >
           {sidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
         </button>
-        <div className="lg:hidden flex-1 flex justify-center min-w-0 max-h-full overflow-hidden px-1">
-          <Logo size="sm" variant="dark" />
+        <div className="lg:hidden flex-1 flex justify-center min-w-0 max-h-10 overflow-hidden px-1">
+          <Logo size="xs" variant="dark" />
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-4 ml-auto shrink-0">
+      <div className="flex items-center gap-1 sm:gap-3 ml-auto shrink-0">
         <LiveCallsBadge />
 
         {!isMaster && (
           <Link
             to="/wallet"
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors shrink-0"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors shrink-0"
             title="Wallet balance"
           >
             <HiOutlineCurrencyDollar className="w-5 h-5 shrink-0" />
-            <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatWalletBalance(displayBalance)}</span>
+            <span className="hidden sm:inline text-xs sm:text-sm font-bold whitespace-nowrap">
+              {formatWalletBalance(displayBalance)}
+            </span>
           </Link>
         )}
 

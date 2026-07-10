@@ -18,16 +18,23 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   background: var(--color-surface);
   color: var(--color-ink);
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* Gold focus ring for inputs */

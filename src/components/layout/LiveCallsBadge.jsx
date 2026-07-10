@@ -22,8 +22,9 @@ export default function LiveCallsBadge() {
           <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand animate-pulse" />
         )}
       </span>
-      <span className="text-xs sm:text-sm font-bold whitespace-nowrap truncate">
-        {loading ? '…' : count} live
+      <span className="text-xs sm:text-sm font-bold whitespace-nowrap">
+        {loading ? '…' : count}
+        <span className="hidden sm:inline"> live</span>
       </span>
     </Link>
   )

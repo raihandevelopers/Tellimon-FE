@@ -163,15 +163,20 @@ export default function BuyerReports() {
               />
             </FilterField>
           </div>
-          <div className="flex flex-wrap gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 shrink-0 w-full xl:w-auto">
             <button
               type="button"
               onClick={clearFilters}
-              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-gray-50"
+              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-gray-50 w-full sm:w-auto"
             >
               Clear filters
             </button>
-            <PrimaryButton type="button" onClick={handleExport} disabled={exporting || filtered.length === 0}>
+            <PrimaryButton
+              type="button"
+              onClick={handleExport}
+              disabled={exporting || filtered.length === 0}
+              className="w-full sm:w-auto"
+            >
               <HiOutlineDocumentDownload className="w-4 h-4" />
               {exporting ? 'Exporting…' : 'Export Excel'}
             </PrimaryButton>

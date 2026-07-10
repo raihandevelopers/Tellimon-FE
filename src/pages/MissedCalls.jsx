@@ -166,14 +166,14 @@ export default function MissedCalls() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Caller</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">DID</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Time (IST)</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Time (IST)</th>
               </tr>
             </thead>
             <tbody>
@@ -192,9 +192,9 @@ export default function MissedCalls() {
               ) : (
                 calls.map((call) => (
                   <tr key={call.id} className="border-b border-border hover:bg-gray-50/50">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{call.caller || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{formatDidDisplay(call.did)}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{call.buyerNumber || '—'}</td>
+                    <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[8rem] truncate">{call.caller || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{formatDidDisplay(call.did)}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[8rem] truncate">{call.buyerNumber || '—'}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -204,7 +204,7 @@ export default function MissedCalls() {
                         {call.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatDateTime(call.startedAt || call.createdAt)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{formatDateTime(call.startedAt || call.createdAt)}</td>
                   </tr>
                 ))
               )}
