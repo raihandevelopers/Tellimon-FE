@@ -102,7 +102,6 @@ export default function Buyers() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Name</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Number</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Daily Cap</th>
-                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Priority</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Ring Timeout</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Concurrent</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Total Calls</th>
@@ -114,13 +113,13 @@ export default function Buyers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading buyers…
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={9}>
                     <EmptyState message="No buyers created yet." />
                   </td>
                 </tr>
@@ -130,7 +129,6 @@ export default function Buyers() {
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[10rem] truncate">{buyer.name || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-700 whitespace-nowrap">{buyer.number}</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.dailyCap}</td>
-                    <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.priority}</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.ringTimeout}s</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.concurrentCalls}</td>
                     <td className="px-5 py-3.5 font-semibold text-brand whitespace-nowrap">{callCounts.get(buyer.id) ?? 0}</td>

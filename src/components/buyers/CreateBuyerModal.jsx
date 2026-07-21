@@ -4,7 +4,6 @@ const emptyForm = {
   name: '',
   number: '',
   dailyCap: 0,
-  priority: 1,
   ringTimeout: 60,
   concurrentCalls: 1,
   status: 'Active',
@@ -33,7 +32,6 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
       name: form.get('name').trim(),
       number: form.get('number').trim(),
       dailyCap: Number(form.get('dailyCap')) || 0,
-      priority: Number(form.get('priority')) || 1,
       ringTimeout: Number(form.get('ringTimeout')) || 60,
       concurrentCalls: Number(form.get('concurrentCalls')) || 1,
       status: form.get('status'),
@@ -106,21 +104,6 @@ export default function CreateBuyerModal({ open, onClose, onSubmit, initial = em
                 className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
               <p className="text-xs text-gray-400 mt-1.5">0 = unlimited. Enforced on each inbound call.</p>
-            </div>
-
-            <div>
-              <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Priority
-              </label>
-              <input
-                id="priority"
-                name="priority"
-                type="number"
-                min="1"
-                defaultValue={initial.priority}
-                className="w-full px-4 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
-              />
-              <p className="text-xs text-gray-400 mt-1.5">Higher value wins when strategy is Priority.</p>
             </div>
 
             <div>
