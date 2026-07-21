@@ -85,9 +85,7 @@ export default function LiveCalls() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Buyer</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">
-                    {formatDidDisplay(call.buyerNumber)}
-                  </p>
+                  <p className="font-medium text-ink mt-0.5 truncate">{formatDidDisplay(call.buyerNumber)}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>

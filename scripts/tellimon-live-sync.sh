@@ -12,13 +12,6 @@ from datetime import datetime, timezone, timedelta
 
 path = sys.argv[1]
 calls = []
-buyer = ''
-try:
-    with open('/etc/tellimon/buyer.number') as f:
-        buyer = f.read().strip()
-except OSError:
-    pass
-
 now = datetime.now(timezone.utc)
 
 
@@ -26,10 +19,9 @@ def digits(value):
     return re.sub(r'[^0-9]', '', str(value or ''))
 
 
-def caller_from_channel_dump(channel_id):
-    """Fallback: read Caller ID / CALLER var from full channel dump."""
+def channel_dump(channel_id):
     try:
-        out = subprocess.check_output(
+        return subprocess.check_output(
             ['asterisk', '-rx', f'core show channel {channel_id}'],
             stderr=subprocess.DEVNULL,
             text=True,
@@ -38,6 +30,10 @@ def caller_from_channel_dump(channel_id):
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
         return ''
 
+
+def caller_from_channel_dump(dump):
+    if not dump:
+        return ''
     patterns = [
         r'Caller ID Num:\s*([0-9+]+)',
         r'Caller ID:\s*"[^"]*"\s*<([0-9+]+)>',
@@ -46,7 +42,7 @@ def caller_from_channel_dump(channel_id):
         r'Connected Line Num:\s*([0-9+]+)',
     ]
     for pat in patterns:
-        m = re.search(pat, out)
+        m = re.search(pat, dump)
         if m:
             d = digits(m.group(1))
             if len(d) >= 7:
@@ -54,50 +50,106 @@ def caller_from_channel_dump(channel_id):
     return ''
 
 
+def buyer_from_text(text, did=''):
+    """Extract dialed buyer number; never return the inbound DID."""
+    if not text:
+        return ''
+    patterns = [
+        r'(?m)^\s*BUYER\s*[:=]\s*([0-9+]+)\s*$',
+        r'\bBUYER=([0-9+]+)\b',
+        r'Dial\(PJSIP/([0-9]{10,15})@',
+        r'Application:\s*Dial\b.*PJSIP/([0-9]{10,15})@',
+        r'Data:\s*PJSIP/([0-9]{10,15})@',
+        r'PJSIP/([0-9]{10,15})@xolo',
+        r'PJSIP/([0-9]{10,15})@',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text, re.I | re.S)
+        if not m:
+            continue
+        d = digits(m.group(1))
+        if len(d) >= 10 and d != did:
+            return d
+    return ''
+
+
+def buyer_from_concise_parts(parts, did=''):
+    # Prefer Application/Data fields, then scan the whole concise row.
+    for idx in (5, 6, 4, 3):
+        if idx < len(parts):
+            found = buyer_from_text(parts[idx], did=did)
+            if found:
+                return found
+    return buyer_from_text('!'.join(parts), did=did)
+
+
 with open(path) as f:
-    for line in f:
-        parts = line.strip().split('!')
-        if len(parts) < 6:
-            continue
-        channel_id, context, exten = parts[0], parts[1], parts[2]
-        app = parts[5] if len(parts) > 5 else ''
-        if 'PJSIP' not in channel_id:
-            continue
-        # Only the inbound trunk leg — skip outbound buyer legs (duplicate / empty CID).
-        if context != 'from-trunk':
-            continue
-        if app.startswith('AppDial'):
-            continue
-        did = digits(exten)
-        # Real inbound DIDs are phone numbers; skip originate/test legs (exten s).
-        if len(did) < 10:
-            continue
+    lines = [ln.strip() for ln in f if ln.strip()]
 
-        # Asterisk concise: ...!CallerIDname!CallerIDnum!Accountcode!PeerAccount!Duration!...
-        cid_name = parts[7] if len(parts) > 7 else ''
-        cid_num = parts[8] if len(parts) > 8 else ''
-        caller = digits(cid_num) or digits(cid_name)
-        # Ignore if concise CID is actually the DID (some trunks mirror RURI into CID).
-        if caller == did:
-            caller = ''
-        if len(caller) < 7:
-            caller = caller_from_channel_dump(channel_id)
+for line in lines:
+    parts = line.split('!')
+    if len(parts) < 6:
+        continue
+    channel_id, context, exten = parts[0], parts[1], parts[2]
+    app = parts[5] if len(parts) > 5 else ''
+    if 'PJSIP' not in channel_id:
+        continue
+    # Only the inbound trunk leg — skip outbound buyer legs (duplicate / empty CID).
+    if context != 'from-trunk':
+        continue
+    if app.startswith('AppDial'):
+        continue
+    did = digits(exten)
+    # Real inbound DIDs are phone numbers; skip originate/test legs (exten s).
+    if len(did) < 10:
+        continue
 
-        duration_sec = 0
-        if len(parts) > 11 and parts[11]:
-            try:
-                duration_sec = max(0, min(86400, int(float(parts[11]))))
-            except (ValueError, TypeError):
-                duration_sec = 0
-        started_at = (now - timedelta(seconds=duration_sec)).isoformat()
-        calls.append({
-            'channelId': channel_id,
-            'caller': caller or '',
-            'did': did,
-            'buyerNumber': buyer,
-            'route': 'xolo-endpoint',
-            'startedAt': started_at,
-        })
+    # Asterisk concise: ...!CallerIDname!CallerIDnum!Accountcode!PeerAccount!Duration!...
+    cid_name = parts[7] if len(parts) > 7 else ''
+    cid_num = parts[8] if len(parts) > 8 else ''
+    caller = digits(cid_num) or digits(cid_name)
+    # Ignore if concise CID is actually the DID (some trunks mirror RURI into CID).
+    if caller == did:
+        caller = ''
+
+    dump = channel_dump(channel_id)
+    if len(caller) < 7:
+        caller = caller_from_channel_dump(dump)
+
+    # Resolve the buyer actually being dialed on THIS call.
+    # Do not fall back to /etc/tellimon/buyer.number (stale single-buyer file).
+    live_buyer = buyer_from_concise_parts(parts, did=did)
+    if not live_buyer:
+        live_buyer = buyer_from_text(dump, did=did)
+    if not live_buyer:
+        # Outbound leg may carry Dial(PJSIP/<buyer>@...) while inbound shows Bridge.
+        for other in lines:
+            if other == line or 'PJSIP/' not in other:
+                continue
+            op = other.split('!')
+            if len(op) < 6:
+                continue
+            # Same DID dialed out, or AppDial/Dial toward buyer
+            found = buyer_from_concise_parts(op, did=did)
+            if found:
+                live_buyer = found
+                break
+
+    duration_sec = 0
+    if len(parts) > 11 and parts[11]:
+        try:
+            duration_sec = max(0, min(86400, int(float(parts[11]))))
+        except (ValueError, TypeError):
+            duration_sec = 0
+    started_at = (now - timedelta(seconds=duration_sec)).isoformat()
+    calls.append({
+        'channelId': channel_id,
+        'caller': caller or '',
+        'did': did,
+        'buyerNumber': live_buyer or '',
+        'route': 'xolo-endpoint',
+        'startedAt': started_at,
+    })
 
 user_id = os.environ.get('USER_ID', '')
 secret = os.environ.get('WEBHOOK_SECRET', '')

@@ -77,8 +77,8 @@ certbot --nginx -d "$API_DOMAIN" --non-interactive --agree-tos --register-unsafe
 API_BASE="https://${API_DOMAIN}/api"
 cat > /etc/tellimon/config <<CFGEOF
 API_BASE=${API_BASE}
-DEMO_EMAIL=demo@tellimon.com
-DEMO_PASS=demo123
+DEMO_EMAIL=admin
+DEMO_PASS=${DEMO_PASS:-changeme}
 USER_ID=${USER_ID}
 WEBHOOK_URL=${API_BASE}/calls/webhook
 WEBHOOK_SECRET=${WEBHOOK_SECRET}

@@ -27,8 +27,39 @@ def load_config():
     return conf
 
 
+def channel_dump(channel_id):
+    try:
+        return subprocess.check_output(
+            ['asterisk', '-rx', f'core show channel {channel_id}'],
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=2,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        return ''
+
+
+def buyer_number_from_text(text):
+    if not text:
+        return ''
+    patterns = [
+        r'\bBUYER=([0-9+]+)\b',
+        r'Dial\(PJSIP/([0-9]{10,15})@',
+        r'PJSIP/([0-9]{10,15})@xolo',
+        r'PJSIP/([0-9]{10,15})@',
+        r'Data:\s*PJSIP/([0-9]{10,15})@',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text)
+        if m:
+            d = digits(m.group(1))
+            if len(d) >= 10:
+                return d
+    return ''
+
+
 def active_calls_by_buyer():
-    """Count in-flight outbound legs per buyer from Asterisk."""
+    """Count in-flight outbound dials per buyer from Asterisk."""
     counts = {}
     try:
         out = subprocess.check_output(
@@ -41,43 +72,62 @@ def active_calls_by_buyer():
 
     buyers_by_number = {}
     routing_path = '/etc/tellimon/routing.json'
-    if os.path.isfile(routing_path):
+    buyers_path = '/etc/tellimon/buyers.json'
+    for path in (routing_path, buyers_path):
+        if not os.path.isfile(path):
+            continue
         try:
-            data = json.load(open(routing_path))
-            for b in data.get('buyers', []):
-                if b.get('status') != 'Active':
+            data = json.load(open(path))
+            rows = data.get('buyers', data) if isinstance(data, dict) else data
+            if not isinstance(rows, list):
+                continue
+            for b in rows:
+                if b.get('status') and b.get('status') != 'Active':
                     continue
                 n = digits(b.get('number', ''))
                 if n:
                     buyers_by_number[n] = str(b.get('id', ''))
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, TypeError):
             pass
 
     for line in out.splitlines():
         if not line.strip() or '!' not in line:
             continue
         parts = line.split('!')
-        channel = parts[0]
-        exten = parts[2] if len(parts) > 2 else ''
-        # Only count outbound legs to buyers — avoid false matches on inbound/DID lines.
-        if 'xolo-endpoint' not in channel.lower():
+        if len(parts) < 6:
             continue
-        exten_d = digits(exten)
-        if not exten_d:
-            m = re.search(r'/(\d{10,15})', channel)
-            if m:
-                exten_d = digits(m.group(1))
-        if not exten_d:
+        channel_id = parts[0]
+        context = parts[1]
+        app = parts[5] if len(parts) > 5 else ''
+        app_data = parts[6] if len(parts) > 6 else ''
+
+        # Prefer the inbound Dial() leg — Data is PJSIP/<buyer>@xolo-endpoint,...
+        # Skip AppDial outbound clones to avoid double-counting.
+        if app.startswith('AppDial'):
             continue
-        bid = buyers_by_number.get(exten_d)
+
+        buyer_num = ''
+        if app == 'Dial' or app.startswith('Dial'):
+            buyer_num = buyer_number_from_text(app_data) or buyer_number_from_text('!'.join(parts))
+
+        if not buyer_num and context == 'from-trunk':
+            # Bridged call may show Bridge as app; read BUYER channel var.
+            if app.lower() in ('bridge', 'mixmonitor', '') or 'bridge' in app.lower():
+                buyer_num = buyer_number_from_text(channel_dump(channel_id))
+
+        if not buyer_num:
+            continue
+
+        bid = buyers_by_number.get(buyer_num)
         if bid:
             counts[bid] = counts.get(bid, 0) + 1
 
     return counts
 
 
-def local_fallback(did, caller):
+def local_fallback(did, caller, active=None):
     """Use synced routing.json when API is unreachable."""
+    active = active or {}
     path = '/etc/tellimon/routing.json'
     if not os.path.isfile(path):
         return None
@@ -104,6 +154,9 @@ def local_fallback(did, caller):
         cap = int(b.get('dailyCap') or 0)
         if cap > 0 and calls_today.get(b['id'], 0) >= cap:
             return False
+        max_c = int(b.get('concurrentCalls') or 0)
+        if max_c > 0 and int(active.get(str(b['id']), 0)) >= max_c:
+            return False
         return True
 
     if did_rec and did_rec.get('buyerId'):
@@ -115,6 +168,7 @@ def local_fallback(did, caller):
                 'ringTimeout': max(1, int(direct.get('ringTimeout') or 60)),
                 'campaignId': did_rec.get('campaignId') or '',
             }
+        # Direct buyer busy/ineligible — fall through to campaign pool.
 
     campaign = campaigns.get(did_rec.get('campaignId')) if did_rec else None
     pool = buyers
@@ -154,9 +208,18 @@ def local_fallback(did, caller):
     elif strategy == 'Round Robin':
         key = campaign['id'] if campaign else '__global__'
         idx = int(state.get('roundRobinIndex', {}).get(key, 0))
-        pick = pool[idx % len(pool)]
+        ordered = sorted(pool, key=lambda b: int(b.get('priority') or 0), reverse=True)
+        pick = ordered[idx % len(ordered)]
     else:
-        pick = sorted(pool, key=lambda b: int(b.get('priority') or 0), reverse=True)[0]
+        # Priority: highest priority first; among equals prefer fewer active calls.
+        pick = sorted(
+            pool,
+            key=lambda b: (
+                -int(b.get('priority') or 0),
+                int(active.get(str(b.get('id', '')), 0)),
+                str(b.get('id', '')),
+            ),
+        )[0]
 
     return {
         'buyerNumber': digits(pick['number']),
@@ -206,7 +269,7 @@ def main():
 
     result = api_resolve(conf, did, caller, active)
     if not result:
-        result = local_fallback(did, caller)
+        result = local_fallback(did, caller, active)
     if not result or not result.get('buyerNumber'):
         sys.exit(1)
 

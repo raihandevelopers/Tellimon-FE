@@ -99,7 +99,7 @@ Buyer changes take effect on the **next call** (no wait).
 | Item | Details |
 |------|---------|
 | Panel | https://hitechpbxworld.com |
-| Login | `demo@tellimon.com` / `demo123` |
+| Login | `admin` / (server password) |
 
 ---
 

@@ -96,8 +96,8 @@ fi
 
 cat > /etc/tellimon/config <<CFGEOF
 API_BASE=https://tellimon-be.vercel.app/api
-DEMO_EMAIL=demo@tellimon.com
-DEMO_PASS=demo123
+DEMO_EMAIL=admin
+DEMO_PASS=${DEMO_PASS:-changeme}
 USER_ID=6a2499728387de0796ce6f3c
 WEBHOOK_URL=https://tellimon-be.vercel.app/api/calls/webhook
 WEBHOOK_SECRET=${WEBHOOK_SECRET}
@@ -149,10 +149,11 @@ exten => _X.,1,NoOp(Tellimon inbound ${CALLERID(num)} to ${EXTEN})
  same => n,Set(MONITOR_DIR=/var/www/recordings)
  same => n,System(mkdir -p ${MONITOR_DIR})
  same => n,Set(START=${EPOCH})
- same => n,MixMonitor(${MONITOR_DIR}/${REC_FILE}.wav,b)
+ same => n,Set(JITTERBUFFER(adaptive)=default)
+ same => n,MixMonitor(${MONITOR_DIR}/${REC_FILE}.wav)
  same => n,Set(CALLERID(num)=${CALLER})
  same => n,Set(CALLERID(name)=${CALLER})
- same => n,Dial(PJSIP/${BUYER}@xolo-endpoint,${RING_TIMEOUT})
+ same => n,Dial(PJSIP/${BUYER}@xolo-endpoint,${RING_TIMEOUT},b(tellimon-callee-setup^s^1))
  same => n,Set(END=${EPOCH})
  same => n,Set(DURATION=$[${END}-${START}])
  same => n,ExecIf($["${DIALSTATUS}"="ANSWER"]?Set(CALL_STATUS=answered))
@@ -167,6 +168,10 @@ exten => h,1,Gosub(tellimon-post-cdr,s,1)
 exten => nobuyer,1,NoOp(No active buyer in Tellimon)
  same => n,Playback(ss-noservice)
  same => n,Hangup()
+
+[tellimon-callee-setup]
+exten => s,1,Set(JITTERBUFFER(adaptive)=default)
+ same => n,Return()
 
 [tellimon-check-blocked]
 exten => s,1,Set(BLOCKED=${SHELL(grep -Fx '${ARG1}' /etc/tellimon/blocked.list 2>/dev/null | head -1)})
@@ -201,6 +206,17 @@ PYEOF
 
 grep -q 'extensions.d/tellimon' /etc/asterisk/extensions.conf || \
   echo '#include "/etc/asterisk/extensions.d/tellimon.conf"' >> /etc/asterisk/extensions.conf
+
+# Force softmix so MixMonitor always hears both legs (avoids one-sided recordings).
+if ! grep -q 'noload => bridge_native_rtp.so' /etc/asterisk/modules.conf 2>/dev/null; then
+  if grep -q '^\[modules\]' /etc/asterisk/modules.conf 2>/dev/null; then
+    sed -i '/^\[modules\]/a noload => bridge_native_rtp.so' /etc/asterisk/modules.conf
+  else
+    printf '%s\n' 'noload => bridge_native_rtp.so' | cat - /etc/asterisk/modules.conf > /tmp/modules.conf.new
+    mv /tmp/modules.conf.new /etc/asterisk/modules.conf
+  fi
+fi
+asterisk -rx 'module unload bridge_native_rtp.so' 2>/dev/null || true
 
 chown -R asterisk:asterisk /var/www/recordings
 chmod 775 /var/www/recordings

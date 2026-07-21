@@ -212,7 +212,7 @@ flowchart LR
 4. Token stored in browser (`localStorage`) and sent on every API request
 5. Protected pages redirect to login if token is missing or expired
 
-**Demo account:** `demo@tellimon.com` / `demo123`
+**Admin account:** `admin` (password set on the API server)
 
 **Activity logged:** Every login creates an entry in Activity Logs.
 
