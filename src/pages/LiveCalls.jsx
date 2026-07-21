@@ -74,7 +74,7 @@ export default function LiveCalls() {
               <div className="p-3 rounded-xl bg-brand-light text-brand shrink-0">
                 <HiOutlinePhone className="w-5 h-5" />
               </div>
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-sm min-w-0">
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4 text-sm min-w-0">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Caller</p>
                   <p className="font-medium text-ink mt-0.5 truncate">{call.caller || '—'}</p>
@@ -82,6 +82,12 @@ export default function LiveCalls() {
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">DID</p>
                   <p className="font-medium text-ink mt-0.5 truncate">{formatDidDisplay(call.did)}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Buyer</p>
+                  <p className="font-medium text-ink mt-0.5 truncate">
+                    {formatDidDisplay(call.buyerNumber)}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
