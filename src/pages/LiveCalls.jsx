@@ -77,32 +77,42 @@ export default function LiveCalls() {
               <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-3 sm:gap-4 text-sm min-w-0">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Caller</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">{call.caller || '—'}</p>
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-all">
+                    {call.caller || '—'}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">DID</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">{formatDidDisplay(call.did)}</p>
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-all">
+                    {formatDidDisplay(call.did)}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Buyer</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-words">
                     {call.buyerName || '—'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 break-all">
                     {formatDidDisplay(call.buyerNumber)}
                   </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Campaign</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">{call.campaignName || '—'}</p>
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-words">
+                    {call.campaignName || '—'}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
-                  <p className="font-medium text-ink mt-0.5">{formatLiveDuration(call.startedAt)}</p>
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5">
+                    {formatLiveDuration(call.startedAt)}
+                  </p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Route</p>
-                  <p className="font-medium text-ink mt-0.5 truncate">{call.route || 'xolo-endpoint'}</p>
+                  <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-all">
+                    {call.route || 'xolo-endpoint'}
+                  </p>
                 </div>
               </div>
             </div>
