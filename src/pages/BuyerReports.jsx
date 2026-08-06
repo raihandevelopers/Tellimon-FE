@@ -24,6 +24,7 @@ function FilterField({ label, children }) {
 export default function BuyerReports() {
   const [reports, setReports] = useState([])
   const [totalCalls, setTotalCalls] = useState(0)
+  const [periodLabel, setPeriodLabel] = useState('')
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [search, setSearch] = useState('')
@@ -42,10 +43,12 @@ export default function BuyerReports() {
       const data = await api.getBuyerReports(params)
       setReports(data.reports || [])
       setTotalCalls(data.totalCalls || 0)
+      setPeriodLabel(data.period?.label || '')
     } catch (err) {
       console.error(err)
       setReports([])
       setTotalCalls(0)
+      setPeriodLabel('')
     } finally {
       setLoading(false)
     }
@@ -106,7 +109,9 @@ export default function BuyerReports() {
   return (
     <div className="space-y-5">
       <InfoBanner>
-        Call counts per buyer from CDR records. Filter by date, call status (complete / missed), and export to Excel.
+        Call counts per buyer from CDR records, using the same business day as the dashboard (8:00 AM IST →
+        8:00 AM next day)
+        {periodLabel ? ` — current range: ${periodLabel}` : ''}. Filter by date, call status, and export to Excel.
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm ring-1 ring-brand/5 overflow-hidden">
