@@ -12,6 +12,7 @@ import {
 import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useLiveCalls } from '../context/LiveCallsContext'
 import { formatLiveDuration } from '../utils/formatLiveDuration'
 import { msUntilNextIstReset } from '../utils/istBusinessDay'
@@ -25,6 +26,7 @@ function formatDidDisplay(number) {
 }
 
 export default function Dashboard() {
+  const { isMaster } = useAuth()
   const { liveCalls, count: liveCount, refetch: refetchLiveCalls } = useLiveCalls()
   const [, setTick] = useState(0)
   const [connected, setConnected] = useState(true)
@@ -121,7 +123,9 @@ export default function Dashboard() {
     : null
 
   const cards = [
-    { label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck },
+    ...(isMaster
+      ? [{ label: 'Campaigns', value: stats.campaigns, icon: HiOutlineShieldCheck }]
+      : []),
     { label: 'Live Calls', value: liveCount, icon: HiOutlineStatusOnline, live: true, to: '/live-calls' },
     { label: 'Total Calls', value: stats.totalCalls, icon: HiOutlinePhone, to: '/call-reports' },
     { label: 'Answered Calls', value: stats.answered, icon: HiOutlineCheckCircle, to: '/call-reports' },

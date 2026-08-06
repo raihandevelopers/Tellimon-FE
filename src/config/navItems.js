@@ -14,17 +14,17 @@ import {
 
 export const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: HiOutlineViewGrid },
-  { to: '/campaigns', label: 'Campaigns', icon: HiOutlineSpeakerphone },
-  { to: '/blocked-contacts', label: 'Blocked Contacts', icon: HiOutlineBan },
-  { to: '/buyers', label: 'Buyers', icon: HiOutlineUserGroup },
-  { to: '/buyer-reports', label: 'Buyer Reports', icon: HiOutlineChartPie },
+  { to: '/campaigns', label: 'Campaigns', icon: HiOutlineSpeakerphone, masterOnly: true },
+  { to: '/blocked-contacts', label: 'Blocked Contacts', icon: HiOutlineBan, masterOnly: true },
+  { to: '/buyers', label: 'Buyers', icon: HiOutlineUserGroup, masterOnly: true },
+  { to: '/buyer-reports', label: 'Buyer Reports', icon: HiOutlineChartPie, masterOnly: true },
   { to: '/customers', label: 'Customers', icon: HiOutlineUsers, masterOnly: true },
   { to: '/assignment-numbers', label: 'Assignment Numbers', icon: HiOutlinePhone, customerOnly: true },
   { to: '/wallet', label: 'Wallet', icon: HiOutlineCurrencyDollar },
   { to: '/did-management', label: 'DID Management', icon: HiOutlinePhone, masterOnly: true },
   { to: '/call-reports', label: 'Call Reports', icon: HiOutlineChartBar },
   { to: '/live-calls', label: 'Live Calls', icon: HiOutlineStatusOnline },
-  { to: '/activity-logs', label: 'Activity Logs', icon: HiOutlineClipboardList },
+  { to: '/activity-logs', label: 'Activity Logs', icon: HiOutlineClipboardList, masterOnly: true },
 ]
 
 export function navItemsForRole(isMaster) {

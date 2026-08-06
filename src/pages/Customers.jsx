@@ -122,8 +122,8 @@ export default function Customers() {
   return (
     <>
       <InfoBanner>
-        Master accounts can create customer logins and assign DIDs. Customers share your buyers and campaigns but
-        only see calls for their assigned numbers.
+        Master accounts can create customer logins and assign DIDs. Customers only see their assigned
+        numbers, wallet, and call activity — not your buyers or campaigns.
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden ring-1 ring-brand/5 mt-4">
