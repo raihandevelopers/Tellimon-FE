@@ -1,6 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { HiOutlineDocumentDownload, HiOutlinePhone, HiOutlineCheckCircle, HiOutlinePhoneMissedCall } from 'react-icons/hi'
+import {
+  HiOutlineDocumentDownload,
+  HiOutlinePhone,
+  HiOutlineCheckCircle,
+  HiOutlinePhoneMissedCall,
+} from 'react-icons/hi'
 import SearchInput from '../components/ui/SearchInput'
 import EmptyState from '../components/ui/EmptyState'
 import PrimaryButton from '../components/ui/PrimaryButton'
@@ -21,6 +26,15 @@ function FilterField({ label, children }) {
   )
 }
 
+function normalizeRange(from, to) {
+  let dateFrom = from || ''
+  let dateTo = to || ''
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    ;[dateFrom, dateTo] = [dateTo, dateFrom]
+  }
+  return { dateFrom, dateTo }
+}
+
 export default function BuyerReports() {
   const [reports, setReports] = useState([])
   const [totalCalls, setTotalCalls] = useState(0)
@@ -32,31 +46,39 @@ export default function BuyerReports() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [applied, setApplied] = useState({ dateFrom: '', dateTo: '', statusFilter: '' })
+  const [hideZero, setHideZero] = useState(true)
+  const reqId = useRef(0)
 
-  const loadReports = async () => {
+  const loadReports = async (filters) => {
+    const request = ++reqId.current
     setLoading(true)
     try {
+      const { dateFrom: from, dateTo: to } = normalizeRange(filters.dateFrom, filters.dateTo)
       const params = {}
-      if (dateFrom) params.from = dateFrom
-      if (dateTo) params.to = dateTo
-      if (statusFilter) params.status = statusFilter
+      if (from) params.from = from
+      if (to) params.to = to
+      if (filters.statusFilter) params.status = filters.statusFilter
       const data = await api.getBuyerReports(params)
+      if (request !== reqId.current) return
       setReports(data.reports || [])
       setTotalCalls(data.totalCalls || 0)
       setPeriodLabel(data.period?.label || '')
+      setApplied({ dateFrom: from, dateTo: to, statusFilter: filters.statusFilter || '' })
     } catch (err) {
+      if (request !== reqId.current) return
       console.error(err)
       setReports([])
       setTotalCalls(0)
       setPeriodLabel('')
     } finally {
-      setLoading(false)
+      if (request === reqId.current) setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadReports()
-  }, [dateFrom, dateTo, statusFilter])
+    loadReports({ dateFrom: '', dateTo: '', statusFilter: '' })
+  }, [])
 
   const handleMonthChange = (value) => {
     setMonth(value)
@@ -70,24 +92,15 @@ export default function BuyerReports() {
     setDateTo(range.to)
   }
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return reports
-    return reports.filter(
-      (r) => r.name?.toLowerCase().includes(q) || r.number?.toLowerCase().includes(q)
-    )
-  }, [reports, search])
-
-  const handleExport = () => {
-    setExporting(true)
-    try {
-      downloadBuyerReportsExcel(
-        filtered,
-        buyerReportFilename({ dateFrom, dateTo, status: statusFilter })
-      )
-    } finally {
-      setExporting(false)
-    }
+  const applyFilters = () => {
+    const range = normalizeRange(dateFrom, dateTo)
+    setDateFrom(range.dateFrom)
+    setDateTo(range.dateTo)
+    loadReports({
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+      statusFilter,
+    })
   }
 
   const clearFilters = () => {
@@ -96,28 +109,58 @@ export default function BuyerReports() {
     setDateTo('')
     setStatusFilter('')
     setSearch('')
+    loadReports({ dateFrom: '', dateTo: '', statusFilter: '' })
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return reports.filter((r) => {
+      if (hideZero && (r.totalCalls || 0) === 0) return false
+      if (!q) return true
+      return r.name?.toLowerCase().includes(q) || r.number?.toLowerCase().includes(q)
+    })
+  }, [reports, search, hideZero])
+
+  const handleExport = () => {
+    setExporting(true)
+    try {
+      downloadBuyerReportsExcel(
+        filtered,
+        buyerReportFilename({
+          dateFrom: applied.dateFrom,
+          dateTo: applied.dateTo,
+          status: applied.statusFilter,
+        })
+      )
+    } finally {
+      setExporting(false)
+    }
   }
 
   const callDetailsLink = (buyer) => {
     const params = new URLSearchParams()
     if (buyer.number) params.set('number', buyer.number)
-    if (statusFilter) params.set('status', statusFilter)
+    if (applied.statusFilter) params.set('status', applied.statusFilter)
+    if (applied.dateFrom) params.set('from', applied.dateFrom)
+    if (applied.dateTo) params.set('to', applied.dateTo)
     const q = params.toString()
     return `/call-reports${q ? `?${q}` : ''}`
   }
 
+  const hasDateFilter = Boolean(applied.dateFrom || applied.dateTo)
+
   return (
     <div className="space-y-5">
       <InfoBanner>
-        Call counts per buyer from CDR records, using the same business day as the dashboard (8:00 AM IST →
-        8:00 AM next day)
-        {periodLabel ? ` — current range: ${periodLabel}` : ''}. Filter by date, call status, and export to Excel.
+        Buyer totals use the same business day as the dashboard (8:00 AM IST → 8:00 AM next day). Choose month or
+        from/to dates, then click Apply.
+        {periodLabel ? ` Showing: ${periodLabel}.` : ''}
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm ring-1 ring-brand/5 overflow-hidden">
         <div className="p-5 flex flex-col xl:flex-row xl:items-end gap-4 justify-between border-b border-border">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 flex-1">
-            <FilterField label="Month (IST)">
+            <FilterField label="Month (IST business days)">
               <input
                 type="month"
                 value={month}
@@ -174,8 +217,11 @@ export default function BuyerReports() {
               onClick={clearFilters}
               className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-gray-50 w-full sm:w-auto"
             >
-              Clear filters
+              Clear
             </button>
+            <PrimaryButton type="button" onClick={applyFilters} className="w-full sm:w-auto">
+              Apply filters
+            </PrimaryButton>
             <PrimaryButton
               type="button"
               onClick={handleExport}
@@ -188,24 +234,34 @@ export default function BuyerReports() {
           </div>
         </div>
 
-        <div className="px-5 py-3 bg-gray-50 border-b border-border text-sm text-gray-600">
-          <span className="font-semibold text-ink">{totalCalls}</span> total calls across{' '}
-          <span className="font-semibold text-ink">{filtered.length}</span> buyers
-          {dateFrom || dateTo ? (
-            <span>
-              {' '}
-              · {dateFrom || '…'} to {dateTo || '…'} (IST)
-            </span>
-          ) : (
-            <span> · all time</span>
-          )}
-          {statusFilter ? <span> · {buyerReportStatusLabel(statusFilter)}</span> : null}
+        <div className="px-5 py-3 bg-gray-50 border-b border-border text-sm text-gray-600 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+          <div>
+            <span className="font-semibold text-ink">{totalCalls}</span> total calls ·{' '}
+            <span className="font-semibold text-ink">{filtered.length}</span> buyers shown
+            {periodLabel ? <span> · {periodLabel}</span> : null}
+            {applied.statusFilter ? <span> · {buyerReportStatusLabel(applied.statusFilter)}</span> : null}
+          </div>
+          <label className="inline-flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideZero}
+              onChange={(e) => setHideZero(e.target.checked)}
+              className="rounded border-border"
+            />
+            Hide buyers with 0 calls
+          </label>
         </div>
 
         {loading ? (
           <div className="p-12 text-center text-sm text-gray-400">Loading buyer reports…</div>
         ) : filtered.length === 0 ? (
-          <EmptyState message="No buyers or no calls match these filters." />
+          <EmptyState
+            message={
+              hasDateFilter || applied.statusFilter
+                ? 'No buyer calls match these filters. Try another date range.'
+                : 'No buyers or calls for the current business day.'
+            }
+          />
         ) : (
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((buyer) => (
