@@ -40,38 +40,10 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route
-              path="campaigns"
-              element={
-                <MasterRoute>
-                  <Campaigns />
-                </MasterRoute>
-              }
-            />
-            <Route
-              path="blocked-contacts"
-              element={
-                <MasterRoute>
-                  <BlockedContacts />
-                </MasterRoute>
-              }
-            />
-            <Route
-              path="buyers"
-              element={
-                <MasterRoute>
-                  <Buyers />
-                </MasterRoute>
-              }
-            />
-            <Route
-              path="buyer-reports"
-              element={
-                <MasterRoute>
-                  <BuyerReports />
-                </MasterRoute>
-              }
-            />
+            <Route path="campaigns" element={<Campaigns />} />
+            <Route path="blocked-contacts" element={<BlockedContacts />} />
+            <Route path="buyers" element={<Buyers />} />
+            <Route path="buyer-reports" element={<BuyerReports />} />
             <Route
               path="customers"
               element={
@@ -91,14 +63,7 @@ export default function App() {
             <Route path="call-reports" element={<CallReports />} />
             <Route path="missed-calls" element={<MissedCalls />} />
             <Route path="live-calls" element={<LiveCalls />} />
-            <Route
-              path="activity-logs"
-              element={
-                <MasterRoute>
-                  <ActivityLogs />
-                </MasterRoute>
-              }
-            />
+            <Route path="activity-logs" element={<ActivityLogs />} />
             <Route path="wallet" element={<Wallet />} />
             <Route path="assignment-numbers" element={<AssignmentNumbers />} />
           </Route>
