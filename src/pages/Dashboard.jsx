@@ -201,7 +201,7 @@ export default function Dashboard() {
                 <div className="p-2.5 rounded-xl bg-brand-light text-brand shrink-0">
                   <HiOutlinePhone className="w-4 h-4" />
                 </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm min-w-0">
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm min-w-0">
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">Caller</p>
                     <p className="font-medium text-ink mt-0.5 truncate">{call.caller || '—'}</p>
@@ -216,6 +216,10 @@ export default function Dashboard() {
                     <p className="text-[10px] text-gray-500 mt-0.5 truncate">
                       {formatDidDisplay(call.buyerNumber)}
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Campaign</p>
+                    <p className="font-medium text-ink mt-0.5 truncate">{call.campaignName || '—'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>

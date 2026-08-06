@@ -87,32 +87,60 @@ def load_buyer_name_maps():
     """number -> name and id -> name from local routing cache."""
     by_number = {}
     by_id = {}
+    campaigns_by_id = {}
+    campaign_by_did = {}
     for path in ('/etc/tellimon/routing.json', '/etc/tellimon/buyers.json'):
         if not os.path.isfile(path):
             continue
         try:
             data = json.load(open(path))
             rows = data.get('buyers', data) if isinstance(data, dict) else data
-            if not isinstance(rows, list):
-                continue
-            for b in rows:
-                bid = str(b.get('id', '')).strip()
-                name = str(b.get('name') or '').strip()
-                n = digits(b.get('number', ''))
-                if bid and name:
-                    by_id[bid] = name
-                if n and name:
-                    by_number[n] = name
-                    if len(n) == 11 and n.startswith('1'):
-                        by_number[n[1:]] = name
-                    elif len(n) == 10:
-                        by_number['1' + n] = name
+            if isinstance(rows, list):
+                for b in rows:
+                    bid = str(b.get('id', '')).strip()
+                    name = str(b.get('name') or '').strip()
+                    n = digits(b.get('number', ''))
+                    if bid and name:
+                        by_id[bid] = name
+                    if n and name:
+                        by_number[n] = name
+                        if len(n) == 11 and n.startswith('1'):
+                            by_number[n[1:]] = name
+                        elif len(n) == 10:
+                            by_number['1' + n] = name
+            if isinstance(data, dict):
+                for c in data.get('campaigns', []) or []:
+                    cid = str(c.get('id', '')).strip()
+                    cname = str(c.get('name') or '').strip()
+                    if cid and cname:
+                        campaigns_by_id[cid] = cname
+                for d in data.get('dids', []) or []:
+                    n = digits(d.get('number', ''))
+                    cid = str(d.get('campaignId') or '').strip()
+                    if n and cid:
+                        campaign_by_did[n] = cid
+                        if len(n) == 11 and n.startswith('1'):
+                            campaign_by_did[n[1:]] = cid
+                        elif len(n) == 10:
+                            campaign_by_did['1' + n] = cid
         except (json.JSONDecodeError, OSError, TypeError):
             pass
-    return by_number, by_id
+    return by_number, by_id, campaigns_by_id, campaign_by_did
 
 
-buyer_name_by_number, buyer_name_by_id = load_buyer_name_maps()
+buyer_name_by_number, buyer_name_by_id, campaign_name_by_id, campaign_id_by_did = load_buyer_name_maps()
+
+
+def campaign_id_from_text(text):
+    if not text:
+        return ''
+    for pat in (r'\bCAMPAIGN_ID=([A-Za-z0-9]+)\b', r'(?m)^\s*CAMPAIGN_ID\s*[:=]\s*([A-Za-z0-9]+)\s*$'):
+        m = re.search(pat, text)
+        if m:
+            val = str(m.group(1)).strip()
+            if val and val.lower() != 'none':
+                return val
+    return ''
 
 
 def buyer_from_concise_parts(parts, did=''):
@@ -184,6 +212,9 @@ for line in lines:
     if not live_buyer_name and live_buyer:
         live_buyer_name = buyer_name_by_number.get(live_buyer, '')
 
+    live_campaign_id = campaign_id_from_text(dump) or campaign_id_by_did.get(did, '')
+    live_campaign_name = campaign_name_by_id.get(live_campaign_id, '') if live_campaign_id else ''
+
     duration_sec = 0
     if len(parts) > 11 and parts[11]:
         try:
@@ -198,6 +229,8 @@ for line in lines:
         'buyerId': live_buyer_id or '',
         'buyerName': live_buyer_name or '',
         'buyerNumber': live_buyer or '',
+        'campaignId': live_campaign_id or '',
+        'campaignName': live_campaign_name or '',
         'route': 'xolo-endpoint',
         'startedAt': started_at,
     })
