@@ -403,7 +403,14 @@ export default function CallReports() {
                   <tr key={call.id} className="border-b border-border hover:bg-gray-50/50">
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[8rem] truncate">{call.caller}</td>
                     <td className="px-5 py-3.5 text-gray-600 max-w-[8rem] truncate">{call.did || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-600 max-w-[8rem] truncate">{call.buyerNumber || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-[10rem]">
+                      <p className="font-medium text-gray-900 truncate text-[13px] sm:text-sm">
+                        {call.buyerName || '—'}
+                      </p>
+                      <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 break-all">
+                        {call.buyerNumber || '—'}
+                      </p>
+                    </td>
                     <td className="px-5 py-3.5 font-mono text-gray-700 whitespace-nowrap">{call.durationFormatted || '0:00'}</td>
                     <td className="px-5 py-3.5">
                       <span
