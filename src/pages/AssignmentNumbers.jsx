@@ -15,22 +15,48 @@ function formatDidDisplay(number) {
 
 export default function AssignmentNumbers() {
   const [numbers, setNumbers] = useState([])
+  const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [savingId, setSavingId] = useState('')
+
+  const load = async () => {
+    try {
+      const [dids, campaignList] = await Promise.all([api.getDIDs(), api.getCampaigns()])
+      setNumbers(dids || [])
+      setCampaigns((campaignList || []).filter((c) => c.active !== false))
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Failed to load assignment numbers')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    api
-      .getDIDs()
-      .then((dids) => setNumbers(dids || []))
-      .catch((err) => setError(err.message || 'Failed to load assignment numbers'))
-      .finally(() => setLoading(false))
+    load()
   }, [])
+
+  const handleCampaignChange = async (didId, campaignId) => {
+    setSavingId(didId)
+    setError('')
+    try {
+      const updated = await api.updateMyDidRouting(didId, {
+        campaignId: campaignId || null,
+      })
+      setNumbers((prev) => prev.map((n) => (n.id === didId ? { ...n, ...updated } : n)))
+    } catch (err) {
+      setError(err.message || 'Failed to update campaign')
+    } finally {
+      setSavingId('')
+    }
+  }
 
   return (
     <div className="space-y-4">
       <InfoBanner>
-        These are your assigned numbers. Call reports, live calls, and wallet charges are tied to these
-        numbers — the actual routing numbers are managed by your administrator.
+        These are your assigned numbers. Inbound calls on them route using your buyers and campaigns —
+        pick a campaign per number below. Call reports and wallet charges stay tied to these numbers.
       </InfoBanner>
 
       <div>
@@ -50,15 +76,47 @@ export default function AssignmentNumbers() {
         ) : (
           <ul className="divide-y divide-border">
             {numbers.map((item) => (
-              <li key={item.id} className="flex items-center gap-4 px-5 py-4">
-                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                  <HiOutlinePhone className="w-5 h-5 text-brand" />
+              <li
+                key={item.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-5 py-4"
+              >
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <HiOutlinePhone className="w-5 h-5 text-brand" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold text-ink">{formatDidDisplay(item.number)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Status: <span className="font-medium">{item.status || 'Active'}</span>
+                      {item.campaignName ? (
+                        <>
+                          {' '}
+                          · Campaign: <span className="font-medium">{item.campaignName}</span>
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-base font-semibold text-ink">{formatDidDisplay(item.number)}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Status: <span className="font-medium">{item.status || 'Active'}</span>
-                  </p>
+                <div className="sm:w-64 shrink-0">
+                  <label className="sr-only" htmlFor={`campaign-${item.id}`}>
+                    Campaign
+                  </label>
+                  <select
+                    id={`campaign-${item.id}`}
+                    className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-gray-800 disabled:opacity-60"
+                    value={item.campaignId || ''}
+                    disabled={savingId === item.id || campaigns.length === 0}
+                    onChange={(e) => handleCampaignChange(item.id, e.target.value)}
+                  >
+                    <option value="">
+                      {campaigns.length === 0 ? 'Create a campaign first' : 'All my buyers (default)'}
+                    </option>
+                    {campaigns.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </li>
             ))}

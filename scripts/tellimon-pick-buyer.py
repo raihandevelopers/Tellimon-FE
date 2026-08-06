@@ -58,22 +58,25 @@ def buyer_number_from_text(text):
     return ''
 
 
-def active_calls_by_buyer():
-    """Count in-flight outbound dials per buyer from Asterisk."""
-    counts = {}
-    try:
-        out = subprocess.check_output(
-            ['asterisk', '-rx', 'core show channels concise'],
-            stderr=subprocess.DEVNULL,
-            text=True,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return counts
+def buyer_id_from_text(text):
+    if not text:
+        return ''
+    patterns = [
+        r'\bBUYER_ID=([A-Za-z0-9]+)\b',
+        r'(?m)^\s*BUYER_ID\s*[:=]\s*([A-Za-z0-9]+)\s*$',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text)
+        if m:
+            return str(m.group(1)).strip()
+    return ''
 
+
+def load_buyer_maps():
+    """number -> id and known ids from local sync files."""
     buyers_by_number = {}
-    routing_path = '/etc/tellimon/routing.json'
-    buyers_path = '/etc/tellimon/buyers.json'
-    for path in (routing_path, buyers_path):
+    known_ids = set()
+    for path in ('/etc/tellimon/routing.json', '/etc/tellimon/buyers.json'):
         if not os.path.isfile(path):
             continue
         try:
@@ -84,45 +87,106 @@ def active_calls_by_buyer():
             for b in rows:
                 if b.get('status') and b.get('status') != 'Active':
                     continue
+                bid = str(b.get('id', '')).strip()
                 n = digits(b.get('number', ''))
-                if n:
-                    buyers_by_number[n] = str(b.get('id', ''))
+                if bid:
+                    known_ids.add(bid)
+                if n and bid:
+                    buyers_by_number[n] = bid
         except (json.JSONDecodeError, OSError, TypeError):
             pass
+    return buyers_by_number, known_ids
 
+
+def astdb_active_counts():
+    """Read dialplan-maintained AstDB counters tellimon/active/<buyerId>."""
+    counts = {}
+    try:
+        out = subprocess.check_output(
+            ['asterisk', '-rx', 'database show tellimon/active'],
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=3,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        return counts
+
+    for line in out.splitlines():
+        # /tellimon/active/<buyerId>: <n>
+        m = re.search(r'/tellimon/active/([A-Za-z0-9]+)\s*:\s*(\d+)', line)
+        if not m:
+            continue
+        bid, n = m.group(1), int(m.group(2))
+        if n > 0:
+            counts[bid] = n
+    return counts
+
+
+def reserve_buyer_slot(buyer_id):
+    """Atomically bump AstDB slot for buyer (must be held under flock)."""
+    bid = str(buyer_id or '').strip()
+    if not bid:
+        return
+    counts = astdb_active_counts()
+    n = int(counts.get(bid, 0)) + 1
+    try:
+        subprocess.check_call(
+            ['asterisk', '-rx', f'database put tellimon/active {bid} {n}'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+def active_calls_by_buyer():
+    """Count in-flight calls per buyer id (channels + AstDB slots)."""
+    buyers_by_number, _known_ids = load_buyer_maps()
+    channel_counts = {}
+
+    try:
+        out = subprocess.check_output(
+            ['asterisk', '-rx', 'core show channels concise'],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        out = ''
+
+    seen_channels = set()
     for line in out.splitlines():
         if not line.strip() or '!' not in line:
             continue
         parts = line.split('!')
         if len(parts) < 6:
             continue
-        channel_id = parts[0]
-        context = parts[1]
-        app = parts[5] if len(parts) > 5 else ''
+        channel_id, context, app = parts[0], parts[1], parts[5]
         app_data = parts[6] if len(parts) > 6 else ''
-
-        # Prefer the inbound Dial() leg — Data is PJSIP/<buyer>@xolo-endpoint,...
-        # Skip AppDial outbound clones to avoid double-counting.
-        if app.startswith('AppDial'):
+        # Count only inbound trunk legs (one per call). Skip outbound clones.
+        if app.startswith('AppDial') or context != 'from-trunk':
             continue
+        if channel_id in seen_channels:
+            continue
+        seen_channels.add(channel_id)
 
-        buyer_num = ''
-        if app == 'Dial' or app.startswith('Dial'):
+        dump = channel_dump(channel_id)
+        bid = buyer_id_from_text(dump)
+        buyer_num = buyer_number_from_text(dump)
+        if not buyer_num and (app == 'Dial' or app.startswith('Dial')):
             buyer_num = buyer_number_from_text(app_data) or buyer_number_from_text('!'.join(parts))
-
-        if not buyer_num and context == 'from-trunk':
-            # Bridged call may show Bridge as app; read BUYER channel var.
-            if app.lower() in ('bridge', 'mixmonitor', '') or 'bridge' in app.lower():
-                buyer_num = buyer_number_from_text(channel_dump(channel_id))
-
-        if not buyer_num:
-            continue
-
-        bid = buyers_by_number.get(buyer_num)
+        if not bid and buyer_num:
+            bid = buyers_by_number.get(buyer_num, '')
         if bid:
-            counts[bid] = counts.get(bid, 0) + 1
+            channel_counts[bid] = channel_counts.get(bid, 0) + 1
 
-    return counts
+    db_counts = astdb_active_counts()
+
+    # Merge: take the higher of AstDB vs live channels per buyer
+    # (AstDB covers the window between pick and Dial / hangup)
+    merged = {}
+    for bid in set(db_counts) | set(channel_counts):
+        merged[bid] = max(db_counts.get(bid, 0), channel_counts.get(bid, 0))
+    return merged
 
 
 def local_fallback(did, caller, active=None):
@@ -138,10 +202,10 @@ def local_fallback(did, caller, active=None):
 
     did_d = digits(did)
     caller_d = digits(caller)
-    buyers = [b for b in data.get('buyers', []) if b.get('status') == 'Active']
+    all_buyers = [b for b in data.get('buyers', []) if b.get('status') == 'Active']
     calls_today = data.get('callsToday', {})
     dids = data.get('dids', [])
-    campaigns = {c['id']: c for c in data.get('campaigns', [])}
+    all_campaigns = data.get('campaigns', [])
     state = data.get('state', {})
     sticky = state.get('stickyMap', {})
     last_buyer = state.get('callerLastBuyer', {})
@@ -149,6 +213,18 @@ def local_fallback(did, caller, active=None):
     did_rec = next((d for d in dids if digits(d.get('number')) == did_d), None)
     if did_rec and did_rec.get('status') == 'Inactive':
         return None
+
+    # Customer-assigned DID → that customer's buyers/campaigns when they have any.
+    buyers = all_buyers
+    campaigns_list = all_campaigns
+    assigned = str(did_rec.get('assignedCustomerId') or '') if did_rec else ''
+    if assigned:
+        cust_buyers = [b for b in all_buyers if str(b.get('userId') or '') == assigned]
+        if cust_buyers:
+            buyers = cust_buyers
+            campaigns_list = [c for c in all_campaigns if str(c.get('userId') or '') == assigned]
+
+    campaigns = {c['id']: c for c in campaigns_list}
 
     def eligible(b):
         cap = int(b.get('dailyCap') or 0)
@@ -168,9 +244,14 @@ def local_fallback(did, caller, active=None):
                 'ringTimeout': max(1, int(direct.get('ringTimeout') or 60)),
                 'campaignId': did_rec.get('campaignId') or '',
             }
-        # Direct buyer busy/ineligible — fall through to campaign pool.
 
     campaign = campaigns.get(did_rec.get('campaignId')) if did_rec else None
+    # Stale master campaign id on a customer DID — use customer's first active campaign.
+    if not campaign and assigned and campaigns_list:
+        campaign = next((c for c in campaigns_list if c.get('active', True)), None)
+        if not campaign and campaigns_list:
+            campaign = campaigns_list[0]
+
     pool = buyers
     if campaign and campaign.get('active', True):
         ids = {str(x) for x in (campaign.get('buyerIds') or [])}
@@ -201,17 +282,30 @@ def local_fallback(did, caller, active=None):
                 pool = [hit]
         if not pool:
             return None
-        pick = sorted(pool, key=lambda b: int(b.get('priority') or 0), reverse=True)[0]
+        pick = sorted(
+            pool,
+            key=lambda b: (
+                -int(b.get('priority') or 0),
+                int(active.get(str(b.get('id', '')), 0)),
+                str(b.get('id', '')),
+            ),
+        )[0]
     elif strategy == 'Random':
         import random
         pick = random.choice(pool)
     elif strategy == 'Round Robin':
         key = campaign['id'] if campaign else '__global__'
         idx = int(state.get('roundRobinIndex', {}).get(key, 0))
-        ordered = sorted(pool, key=lambda b: int(b.get('priority') or 0), reverse=True)
+        ordered = sorted(
+            pool,
+            key=lambda b: (
+                -int(b.get('priority') or 0),
+                int(active.get(str(b.get('id', '')), 0)),
+                str(b.get('id', '')),
+            ),
+        )
         pick = ordered[idx % len(ordered)]
     else:
-        # Priority: highest priority first; among equals prefer fewer active calls.
         pick = sorted(
             pool,
             key=lambda b: (
@@ -260,18 +354,41 @@ def api_resolve(conf, did, caller, active):
 
 
 def main():
+    import fcntl
+
     if len(sys.argv) < 3:
         sys.exit(1)
 
+    # Refresh local buyer cache so number→id map stays current
+    try:
+        subprocess.run(['/usr/local/bin/tellimon-sync.sh'], timeout=6, check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
     did, caller = sys.argv[1], sys.argv[2]
     conf = load_config()
-    active = active_calls_by_buyer()
 
-    result = api_resolve(conf, did, caller, active)
-    if not result:
-        result = local_fallback(did, caller, active)
-    if not result or not result.get('buyerNumber'):
-        sys.exit(1)
+    # Serialize pick + AstDB reserve so concurrent=1 cannot race two calls onto same buyer
+    lock_path = '/var/lock/tellimon-pick.lock'
+    try:
+        lockf = open(lock_path, 'a+')
+    except OSError:
+        lockf = open('/tmp/tellimon-pick.lock', 'a+')
+
+    with lockf:
+        fcntl.flock(lockf, fcntl.LOCK_EX)
+        try:
+            active = active_calls_by_buyer()
+            result = api_resolve(conf, did, caller, active)
+            if not result:
+                result = local_fallback(did, caller, active)
+            if not result or not result.get('buyerNumber'):
+                sys.exit(1)
+            # Reserve slot before returning so the next inbound pick sees this call
+            reserve_buyer_slot(result.get('buyerId'))
+        finally:
+            fcntl.flock(lockf, fcntl.LOCK_UN)
 
     parts = [
         result.get('buyerNumber', ''),

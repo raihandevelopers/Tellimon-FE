@@ -60,6 +60,8 @@ export const api = {
   getDIDs: () => request('/dids'),
   createDID: (body) => request('/dids', { method: 'POST', body: JSON.stringify(body) }),
   updateDID: (id, body) => request(`/dids/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  updateMyDidRouting: (id, body) =>
+    request(`/dids/${id}/my-routing`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteDID: (id) => request(`/dids/${id}`, { method: 'DELETE' }),
 
   getCustomers: () => request('/customers'),
