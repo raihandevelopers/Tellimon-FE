@@ -62,6 +62,7 @@ export const api = {
   updateDID: (id, body) => request(`/dids/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   updateMyDidRouting: (id, body) =>
     request(`/dids/${id}/my-routing`, { method: 'PUT', body: JSON.stringify(body) }),
+  releaseMyDid: (id) => request(`/dids/${id}/my-assignment`, { method: 'DELETE' }),
   deleteDID: (id) => request(`/dids/${id}`, { method: 'DELETE' }),
 
   getCustomers: () => request('/customers'),
