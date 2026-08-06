@@ -73,6 +73,48 @@ def buyer_from_text(text, did=''):
     return ''
 
 
+def buyer_id_from_text(text):
+    if not text:
+        return ''
+    for pat in (r'\bBUYER_ID=([A-Za-z0-9]+)\b', r'(?m)^\s*BUYER_ID\s*[:=]\s*([A-Za-z0-9]+)\s*$'):
+        m = re.search(pat, text)
+        if m:
+            return str(m.group(1)).strip()
+    return ''
+
+
+def load_buyer_name_maps():
+    """number -> name and id -> name from local routing cache."""
+    by_number = {}
+    by_id = {}
+    for path in ('/etc/tellimon/routing.json', '/etc/tellimon/buyers.json'):
+        if not os.path.isfile(path):
+            continue
+        try:
+            data = json.load(open(path))
+            rows = data.get('buyers', data) if isinstance(data, dict) else data
+            if not isinstance(rows, list):
+                continue
+            for b in rows:
+                bid = str(b.get('id', '')).strip()
+                name = str(b.get('name') or '').strip()
+                n = digits(b.get('number', ''))
+                if bid and name:
+                    by_id[bid] = name
+                if n and name:
+                    by_number[n] = name
+                    if len(n) == 11 and n.startswith('1'):
+                        by_number[n[1:]] = name
+                    elif len(n) == 10:
+                        by_number['1' + n] = name
+        except (json.JSONDecodeError, OSError, TypeError):
+            pass
+    return by_number, by_id
+
+
+buyer_name_by_number, buyer_name_by_id = load_buyer_name_maps()
+
+
 def buyer_from_concise_parts(parts, did=''):
     # Prefer Application/Data fields, then scan the whole concise row.
     for idx in (5, 6, 4, 3):
@@ -135,6 +177,13 @@ for line in lines:
                 live_buyer = found
                 break
 
+    live_buyer_id = buyer_id_from_text(dump)
+    live_buyer_name = ''
+    if live_buyer_id:
+        live_buyer_name = buyer_name_by_id.get(live_buyer_id, '')
+    if not live_buyer_name and live_buyer:
+        live_buyer_name = buyer_name_by_number.get(live_buyer, '')
+
     duration_sec = 0
     if len(parts) > 11 and parts[11]:
         try:
@@ -146,6 +195,8 @@ for line in lines:
         'channelId': channel_id,
         'caller': caller or '',
         'did': did,
+        'buyerId': live_buyer_id or '',
+        'buyerName': live_buyer_name or '',
         'buyerNumber': live_buyer or '',
         'route': 'xolo-endpoint',
         'startedAt': started_at,

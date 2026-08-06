@@ -212,7 +212,10 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">Buyer</p>
-                    <p className="font-medium text-ink mt-0.5 truncate">{formatDidDisplay(call.buyerNumber)}</p>
+                    <p className="font-medium text-ink mt-0.5 truncate">{call.buyerName || '—'}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5 truncate">
+                      {formatDidDisplay(call.buyerNumber)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
