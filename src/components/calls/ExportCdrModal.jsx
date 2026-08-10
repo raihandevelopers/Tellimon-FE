@@ -11,7 +11,7 @@ const MODES = [
   { id: 'all', label: 'All calls', hint: 'Export every call record on your account' },
   { id: 'current', label: 'Current table filters', hint: 'Export what you are viewing now' },
   { id: 'month', label: 'By month', hint: 'Pick a calendar month (IST)' },
-  { id: 'range', label: 'By date range', hint: 'Choose a from and to date (IST)' },
+  { id: 'range', label: 'By date/time range', hint: 'Choose from and to date & time (IST)' },
 ]
 
 function currentMonthValue() {
@@ -80,8 +80,8 @@ export default function ExportCdrModal({
       return 'Please select a month to export.'
     }
     if (mode === 'range') {
-      if (!dateFrom || !dateTo) return 'Please select both from and to dates.'
-      if (dateFrom > dateTo) return 'From date cannot be after to date.'
+      if (!dateFrom || !dateTo) return 'Please select both from and to date/time.'
+      if (dateFrom > dateTo) return 'From cannot be after to.'
     }
     if (mode === 'current' && !hasTableFilters) {
       return 'No filters are active on the table. Choose another export option.'
@@ -178,18 +178,18 @@ export default function ExportCdrModal({
           {mode === 'range' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block">
-                <span className="text-xs font-medium text-gray-500">From date</span>
+                <span className="text-xs font-medium text-gray-500">From date & time (IST)</span>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   className={`${filterInputClass} mt-1`}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-gray-500">To date</span>
+                <span className="text-xs font-medium text-gray-500">To date & time (IST)</span>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   min={dateFrom || undefined}

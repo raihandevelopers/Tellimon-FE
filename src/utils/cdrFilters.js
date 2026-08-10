@@ -6,11 +6,24 @@ export function lastDayOfMonth(monthValue) {
   return `${monthValue}-${String(day).padStart(2, '0')}`
 }
 
+/** Normalize API/URL values into datetime-local (YYYY-MM-DDTHH:mm). */
+export function toDatetimeLocalValue(value, { end = false } = {}) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return end ? `${raw}T23:59` : `${raw}T00:00`
+  }
+  const m = raw.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/)
+  if (m) return `${m[1]}T${m[2]}:${m[3]}`
+  return raw
+}
+
 export function monthToDateRange(monthValue) {
   if (!monthValue) return { from: '', to: '' }
+  const last = lastDayOfMonth(monthValue)
   return {
-    from: `${monthValue}-01`,
-    to: lastDayOfMonth(monthValue),
+    from: `${monthValue}-01T00:00`,
+    to: `${last}T23:59`,
   }
 }
 
@@ -110,7 +123,7 @@ export function describeExportScope(mode, options = {}) {
     if (dateFrom || dateTo) {
       parts.push(`${dateFrom || '…'} to ${dateTo || '…'}`)
     } else {
-      parts.push('Select from and to dates')
+      parts.push('Select from and to date/time')
     }
   }
 

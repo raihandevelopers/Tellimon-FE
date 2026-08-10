@@ -11,7 +11,7 @@ import ExportCdrModal from '../components/calls/ExportCdrModal'
 import { api } from '../api/client'
 import { formatDateTime } from '../utils/formatDate'
 import { downloadCdrExcel } from '../utils/exportCdr'
-import { buildCallQuery, exportFilename, monthToDateRange, CALL_STATUS_FILTERS } from '../utils/cdrFilters'
+import { buildCallQuery, exportFilename, monthToDateRange, CALL_STATUS_FILTERS, toDatetimeLocalValue } from '../utils/cdrFilters'
 import { useAuth } from '../context/AuthContext'
 
 const statusStyles = {
@@ -139,6 +139,8 @@ export default function CallReports() {
   useEffect(() => {
     const presetNumber = searchParams.get('number')
     const presetStatus = searchParams.get('status')
+    const presetFrom = searchParams.get('from')
+    const presetTo = searchParams.get('to')
     if (presetNumber) {
       setNumberFilter(presetNumber)
       setNumberQuery(presetNumber)
@@ -146,6 +148,16 @@ export default function CallReports() {
     }
     if (presetStatus != null) {
       setStatusFilter(presetStatus)
+      setPage(1)
+    }
+    if (presetFrom) {
+      setMonth('')
+      setDateFrom(toDatetimeLocalValue(presetFrom))
+      setPage(1)
+    }
+    if (presetTo) {
+      setMonth('')
+      setDateTo(toDatetimeLocalValue(presetTo, { end: true }))
       setPage(1)
     }
   }, [searchParams])
@@ -269,8 +281,8 @@ export default function CallReports() {
         <h1 className="text-xl font-bold text-gray-900">Call Reports</h1>
         <p className="text-sm text-gray-500 mt-1">
           {isMaster
-            ? 'Filter by month, date range, status, or number. Times shown in India Standard Time (IST).'
-            : 'Calls on your assigned DID only. Filter by month, date, status, or number (IST).'}
+            ? 'Filter by month, date/time range, status, or number. Times use India Standard Time (IST).'
+            : 'Calls on your assigned DID only. Filter by month, date/time, status, or number (IST).'}
         </p>
       </div>
 
@@ -285,17 +297,17 @@ export default function CallReports() {
                 className={filterInputClass}
               />
             </FilterField>
-            <FilterField label="From date">
+            <FilterField label="From date & time (IST)">
               <input
-                type="date"
+                type="datetime-local"
                 value={dateFrom}
                 onChange={(e) => handleDateFromChange(e.target.value)}
                 className={filterInputClass}
               />
             </FilterField>
-            <FilterField label="To date">
+            <FilterField label="To date & time (IST)">
               <input
-                type="date"
+                type="datetime-local"
                 value={dateTo}
                 onChange={(e) => handleDateToChange(e.target.value)}
                 min={dateFrom || undefined}

@@ -152,15 +152,15 @@ export default function BuyerReports() {
   return (
     <div className="space-y-5">
       <InfoBanner>
-        Buyer totals use the same business day as the dashboard (8:00 AM IST → 8:00 AM next day). Choose month or
-        from/to dates, then click Apply.
+        Buyer totals default to the current business day (8:00 AM IST → next 8:00 AM). Pick a month or from/to
+        date & time (IST), then click Apply.
         {periodLabel ? ` Showing: ${periodLabel}.` : ''}
       </InfoBanner>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm ring-1 ring-brand/5 overflow-hidden">
         <div className="p-5 flex flex-col xl:flex-row xl:items-end gap-4 justify-between border-b border-border">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 flex-1">
-            <FilterField label="Month (IST business days)">
+            <FilterField label="Month (IST)">
               <input
                 type="month"
                 value={month}
@@ -168,9 +168,9 @@ export default function BuyerReports() {
                 className={filterInputClass}
               />
             </FilterField>
-            <FilterField label="From date">
+            <FilterField label="From date & time (IST)">
               <input
-                type="date"
+                type="datetime-local"
                 value={dateFrom}
                 onChange={(e) => {
                   setMonth('')
@@ -179,14 +179,15 @@ export default function BuyerReports() {
                 className={filterInputClass}
               />
             </FilterField>
-            <FilterField label="To date">
+            <FilterField label="To date & time (IST)">
               <input
-                type="date"
+                type="datetime-local"
                 value={dateTo}
                 onChange={(e) => {
                   setMonth('')
                   setDateTo(e.target.value)
                 }}
+                min={dateFrom || undefined}
                 className={filterInputClass}
               />
             </FilterField>
