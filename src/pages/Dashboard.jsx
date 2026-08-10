@@ -222,37 +222,37 @@ export default function Dashboard() {
                 <div className="p-2.5 rounded-xl bg-brand-light text-brand shrink-0">
                   <HiOutlinePhone className="w-4 h-4" />
                 </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm min-w-0">
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 min-w-0">
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Caller</p>
-                    <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-all">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Caller</p>
+                    <p className="text-[13px] font-medium text-ink mt-0.5 break-all leading-snug">
                       {call.caller || '—'}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">DID</p>
-                    <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-all">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">DID</p>
+                    <p className="text-[13px] font-medium text-ink mt-0.5 break-all leading-snug">
                       {formatDidDisplay(call.did)}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Buyer</p>
-                    <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-words">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Buyer</p>
+                    <p className="text-[13px] font-bold text-ink mt-0.5 break-words leading-snug uppercase">
                       {call.buyerName || '—'}
                     </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5 break-all">
+                    <p className="text-[13px] font-medium text-gray-600 mt-0.5 break-all leading-snug">
                       {formatDidDisplay(call.buyerNumber)}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Campaign</p>
-                    <p className="text-[11px] sm:text-sm font-medium text-ink mt-0.5 break-words">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Campaign</p>
+                    <p className="text-[13px] font-medium text-ink mt-0.5 break-words leading-snug">
                       {call.campaignName || '—'}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</p>
-                    <p className="text-[11px] sm:text-sm font-medium text-brand mt-0.5">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Duration</p>
+                    <p className="text-[13px] font-medium text-brand mt-0.5 leading-snug">
                       {formatLiveDuration(call.startedAt)}
                     </p>
                   </div>
@@ -261,7 +261,7 @@ export default function Dashboard() {
                   type="button"
                   disabled={!call.id || hangingId === call.id}
                   onClick={() => handleHangup(call)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60 shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[13px] font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60 shrink-0"
                   title="Disconnect call"
                 >
                   <HiOutlinePhoneOutgoing className="w-3.5 h-3.5" />
