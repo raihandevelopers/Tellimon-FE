@@ -78,6 +78,7 @@ export const api = {
   },
   getCallStats: () => request('/calls/stats'),
   getLiveCalls: () => request('/calls/live'),
+  hangupLiveCall: (id) => request(`/calls/live/${id}/hangup`, { method: 'POST' }),
 
   fetchRecording: async (filename) => {
     const token = getToken()

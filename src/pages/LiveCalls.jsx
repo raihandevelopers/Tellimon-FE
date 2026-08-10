@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { HiOutlinePhone } from 'react-icons/hi'
+import { HiOutlinePhone, HiOutlinePhoneOutgoing } from 'react-icons/hi'
 import InfoBanner from '../components/ui/InfoBanner'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
@@ -17,12 +17,15 @@ function formatDidDisplay(number) {
 export default function LiveCalls() {
   const [calls, setCalls] = useState([])
   const [loading, setLoading] = useState(true)
+  const [hangingId, setHangingId] = useState('')
+  const [error, setError] = useState('')
   const [, setTick] = useState(0)
 
   const load = async () => {
     try {
       const res = await api.getLiveCalls()
       setCalls(dedupeLiveCalls(res.calls || []))
+      setError('')
     } catch (err) {
       console.error(err)
       setCalls([])
@@ -41,10 +44,28 @@ export default function LiveCalls() {
     }
   }, [])
 
+  const handleHangup = async (call) => {
+    const id = call.id
+    if (!id) return
+    if (!window.confirm('Disconnect this live call? Both sides will be hung up.')) return
+    setHangingId(id)
+    setError('')
+    try {
+      await api.hangupLiveCall(id)
+      setCalls((prev) => prev.filter((c) => c.id !== id))
+    } catch (err) {
+      setError(err.message || 'Failed to disconnect call')
+      await load()
+    } finally {
+      setHangingId('')
+    }
+  }
+
   return (
     <div className="space-y-4">
       <InfoBanner>
-        Shows calls active on Asterisk. Server syncs every 3 seconds via PM2 on the VPS.
+        Shows calls active on Asterisk. Server syncs every 3 seconds. Use Disconnect to hang up a call from the
+        panel.
       </InfoBanner>
 
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
@@ -58,6 +79,10 @@ export default function LiveCalls() {
         </span>
       </div>
 
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2">{error}</p>
+      )}
+
       {loading ? (
         <p className="text-sm text-gray-400">Loading live calls…</p>
       ) : calls.length === 0 ? (
@@ -69,9 +94,9 @@ export default function LiveCalls() {
           {calls.map((call) => (
             <div
               key={call.id || call.channelId}
-              className="bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5 flex items-start sm:items-center gap-3 sm:gap-4 ring-1 ring-brand/5"
+              className="bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 ring-1 ring-brand/5"
             >
-              <div className="p-3 rounded-xl bg-brand-light text-brand shrink-0">
+              <div className="p-3 rounded-xl bg-brand-light text-brand shrink-0 self-start">
                 <HiOutlinePhone className="w-5 h-5" />
               </div>
               <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-3 sm:gap-4 text-sm min-w-0">
@@ -115,6 +140,15 @@ export default function LiveCalls() {
                   </p>
                 </div>
               </div>
+              <button
+                type="button"
+                disabled={!call.id || hangingId === call.id}
+                onClick={() => handleHangup(call)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60 shrink-0 self-stretch sm:self-center"
+              >
+                <HiOutlinePhoneOutgoing className="w-4 h-4" />
+                {hangingId === call.id ? 'Disconnecting…' : 'Disconnect'}
+              </button>
             </div>
           ))}
         </div>

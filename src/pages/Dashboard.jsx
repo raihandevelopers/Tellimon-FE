@@ -8,6 +8,7 @@ import {
   HiOutlineRefresh,
   HiOutlineBadgeCheck,
   HiOutlineStatusOnline,
+  HiOutlinePhoneOutgoing,
 } from 'react-icons/hi'
 import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const { liveCalls, count: liveCount, refetch: refetchLiveCalls } = useLiveCalls()
   const [, setTick] = useState(0)
   const [connected, setConnected] = useState(true)
+  const [hangingId, setHangingId] = useState('')
+  const [hangupError, setHangupError] = useState('')
   const [stats, setStats] = useState({
     campaigns: 0,
     totalCalls: 0,
@@ -107,6 +110,21 @@ export default function Dashboard() {
       setRefreshError(err.message || 'Could not refresh stats')
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const handleHangup = async (call) => {
+    if (!call?.id) return
+    if (!window.confirm('Disconnect this live call? Both sides will be hung up.')) return
+    setHangingId(call.id)
+    setHangupError('')
+    try {
+      await api.hangupLiveCall(call.id)
+      await refetchLiveCalls()
+    } catch (err) {
+      setHangupError(err.message || 'Failed to disconnect call')
+    } finally {
+      setHangingId('')
     }
   }
 
@@ -193,6 +211,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="divide-y divide-border">
+            {hangupError && (
+              <p className="px-5 py-2 text-sm text-red-600 bg-red-50">{hangupError}</p>
+            )}
             {liveCalls.map((call) => (
               <div
                 key={call.id || call.channelId}
@@ -236,6 +257,16 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  disabled={!call.id || hangingId === call.id}
+                  onClick={() => handleHangup(call)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60 shrink-0"
+                  title="Disconnect call"
+                >
+                  <HiOutlinePhoneOutgoing className="w-3.5 h-3.5" />
+                  {hangingId === call.id ? '…' : 'Disconnect'}
+                </button>
               </div>
             ))}
           </div>
