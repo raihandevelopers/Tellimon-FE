@@ -47,14 +47,19 @@ export default function CampaignFormModal({
   initial = emptyForm,
   mode = 'create',
   buyers = [],
+  existingNames = [],
 }) {
   const [active, setActive] = useState(initial.active)
   const [selectedBuyers, setSelectedBuyers] = useState(initial.buyerIds || [])
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (open) {
       setActive(initial.active ?? true)
       setSelectedBuyers(initial.buyerIds || [])
+      setError('')
+      setSaving(false)
     }
   }, [open, initial.active, initial.buyerIds])
 
@@ -93,16 +98,38 @@ export default function CampaignFormModal({
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const form = new FormData(e.target)
-    onSubmit({
-      name: form.get('name').trim(),
-      strategy: form.get('strategy'),
-      duplicateHandling: form.get('duplicateHandling'),
-      active,
-      buyerIds: selectedBuyers,
-    })
+    const name = String(form.get('name') || '').trim()
+    if (!name) {
+      setError('Campaign name is required')
+      return
+    }
+
+    const nameTaken = existingNames.some(
+      (n) => String(n || '').trim().toLowerCase() === name.toLowerCase()
+    )
+    if (nameTaken) {
+      setError('Campaign name already exists. Please choose a unique name.')
+      return
+    }
+
+    setError('')
+    setSaving(true)
+    try {
+      await onSubmit({
+        name,
+        strategy: form.get('strategy'),
+        duplicateHandling: form.get('duplicateHandling'),
+        active,
+        buyerIds: selectedBuyers,
+      })
+    } catch (err) {
+      setError(err.message || 'Failed to save campaign')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const inputClass =
@@ -146,7 +173,9 @@ export default function CampaignFormModal({
               placeholder="XYZ"
               required
               className={inputClass}
+              onChange={() => error && setError('')}
             />
+            {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
           </FormRow>
 
           <FormRow label="Buyers">
@@ -298,9 +327,14 @@ export default function CampaignFormModal({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-bold text-ink bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-md shadow-brand/20"
+              disabled={saving}
+              className="px-5 py-2.5 text-sm font-bold text-ink bg-brand rounded-xl hover:bg-brand-dark transition-colors shadow-md shadow-brand/20 disabled:opacity-60"
             >
-              {mode === 'edit' ? 'Save Changes' : 'Create Campaign'}
+              {saving
+                ? 'Saving…'
+                : mode === 'edit'
+                  ? 'Save Changes'
+                  : 'Create Campaign'}
             </button>
           </div>
         </form>

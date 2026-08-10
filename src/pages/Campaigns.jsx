@@ -58,6 +58,11 @@ export default function Campaigns() {
     setEditCampaign(null)
   }
 
+  const namesForCreate = campaigns.map((c) => c.name)
+  const namesForEdit = campaigns
+    .filter((c) => c.id !== editCampaign?.id)
+    .map((c) => c.name)
+
   const handleRemove = async (id) => {
     await api.deleteCampaign(id)
     setCampaigns((prev) => prev.filter((c) => c.id !== id))
@@ -181,6 +186,7 @@ export default function Campaigns() {
         onSubmit={handleSubmit}
         mode="create"
         buyers={buyers}
+        existingNames={namesForCreate}
       />
 
       <CampaignFormModal
@@ -190,6 +196,7 @@ export default function Campaigns() {
         initial={editCampaign || undefined}
         mode="edit"
         buyers={buyers}
+        existingNames={namesForEdit}
       />
     </>
   )
