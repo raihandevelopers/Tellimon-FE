@@ -8,8 +8,10 @@ import InfoBanner from '../components/ui/InfoBanner'
 import CampaignFormModal from '../components/campaigns/CampaignFormModal'
 import { api } from '../api/client'
 import { formatDate } from '../utils/formatDate'
+import { useAuth } from '../context/AuthContext'
 
 export default function Campaigns() {
+  const { isMaster } = useAuth()
   const [campaigns, setCampaigns] = useState([])
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -96,6 +98,11 @@ export default function Campaigns() {
           <table className="w-full min-w-[850px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
+                {isMaster && (
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                    Customer
+                  </th>
+                )}
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Campaign Name</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyers</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Strategy</th>
@@ -108,19 +115,24 @@ export default function Campaigns() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={isMaster ? 8 : 7} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading campaigns…
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={isMaster ? 8 : 7}>
                     <EmptyState message="No campaigns created yet." />
                   </td>
                 </tr>
               ) : (
                 paginated.map((campaign) => (
                   <tr key={campaign.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                    {isMaster && (
+                      <td className="px-5 py-3.5 text-gray-700 max-w-[9rem] truncate font-medium">
+                        {campaign.customerName || '—'}
+                      </td>
+                    )}
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[12rem] truncate">{campaign.name}</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">
                       {(campaign.buyerIds?.length || 0) > 0

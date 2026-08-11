@@ -117,7 +117,11 @@ export default function BuyerReports() {
     return reports.filter((r) => {
       if (hideZero && (r.totalCalls || 0) === 0) return false
       if (!q) return true
-      return r.name?.toLowerCase().includes(q) || r.number?.toLowerCase().includes(q)
+      return (
+        r.name?.toLowerCase().includes(q) ||
+        r.number?.toLowerCase().includes(q) ||
+        r.customerName?.toLowerCase().includes(q)
+      )
     })
   }, [reports, search, hideZero])
 
@@ -204,9 +208,9 @@ export default function BuyerReports() {
                 ))}
               </select>
             </FilterField>
-            <FilterField label="Search buyer">
+            <FilterField label="Search buyer / customer">
               <SearchInput
-                placeholder="Name or number…"
+                placeholder="Name, number, or customer…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -274,6 +278,11 @@ export default function BuyerReports() {
                   <div className="min-w-0">
                     <h3 className="font-bold text-ink truncate">{buyer.name || 'Unnamed buyer'}</h3>
                     <p className="text-sm text-gray-600 mt-0.5 truncate">{buyer.number}</p>
+                    {buyer.customerName ? (
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        Customer: <span className="font-medium text-ink">{buyer.customerName}</span>
+                      </p>
+                    ) : null}
                   </div>
                   <span
                     className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${

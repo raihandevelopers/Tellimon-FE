@@ -222,7 +222,15 @@ export default function Dashboard() {
                 <div className="p-2.5 rounded-xl bg-brand-light text-brand shrink-0">
                   <HiOutlinePhone className="w-4 h-4" />
                 </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 min-w-0">
+                <div className={`flex-1 grid grid-cols-2 ${isMaster ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3 min-w-0`}>
+                  {isMaster && (
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Customer</p>
+                      <p className="text-[13px] font-medium text-ink mt-0.5 break-words leading-snug">
+                        {call.customerName || '—'}
+                      </p>
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Caller</p>
                     <p className="text-[13px] font-medium text-ink mt-0.5 break-all leading-snug">

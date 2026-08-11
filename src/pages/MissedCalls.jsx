@@ -169,6 +169,11 @@ export default function MissedCalls() {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
+                {isMaster && (
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    Customer
+                  </th>
+                )}
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Caller</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">DID</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Buyer</th>
@@ -179,19 +184,24 @@ export default function MissedCalls() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={isMaster ? 6 : 5} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading missed calls…
                   </td>
                 </tr>
               ) : calls.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={isMaster ? 6 : 5}>
                     <EmptyState message="No missed calls found. Great — everyone is picking up!" />
                   </td>
                 </tr>
               ) : (
                 calls.map((call) => (
                   <tr key={call.id} className="border-b border-border hover:bg-gray-50/50">
+                    {isMaster && (
+                      <td className="px-5 py-3.5 text-gray-700 max-w-[9rem] truncate font-medium">
+                        {call.customerName || '—'}
+                      </td>
+                    )}
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[8rem] truncate">{call.caller || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{formatDidDisplay(call.did)}</td>
                     <td className="px-5 py-3.5 text-gray-600 max-w-[10rem]">

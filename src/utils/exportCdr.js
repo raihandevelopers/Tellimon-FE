@@ -14,6 +14,7 @@ function formatDuration(seconds) {
 }
 
 const CDR_HEADERS = [
+  'Customer',
   'Caller',
   'DID',
   'Buyer Name',
@@ -29,6 +30,7 @@ const CDR_HEADERS = [
 
 export function buildCdrRows(calls = []) {
   return calls.map((call) => [
+    call.customerName || '',
     call.caller || '',
     call.did || '',
     call.buyerName || '',

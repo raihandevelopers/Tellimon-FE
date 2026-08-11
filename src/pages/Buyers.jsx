@@ -9,8 +9,10 @@ import InfoBanner from '../components/ui/InfoBanner'
 import CreateBuyerModal from '../components/buyers/CreateBuyerModal'
 import { api } from '../api/client'
 import { formatDate } from '../utils/formatDate'
+import { useAuth } from '../context/AuthContext'
 
 export default function Buyers() {
+  const { isMaster } = useAuth()
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -99,6 +101,11 @@ export default function Buyers() {
           <table className="w-full min-w-[1100px] text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-y border-border">
+                {isMaster && (
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                    Customer
+                  </th>
+                )}
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Name</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Buyer Number</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Daily Cap</th>
@@ -113,19 +120,24 @@ export default function Buyers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={isMaster ? 10 : 9} className="px-5 py-12 text-center text-sm text-gray-400">
                     Loading buyers…
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={isMaster ? 10 : 9}>
                     <EmptyState message="No buyers created yet." />
                   </td>
                 </tr>
               ) : (
                 paginated.map((buyer) => (
                   <tr key={buyer.id} className="border-b border-border hover:bg-gray-50/50 transition-colors">
+                    {isMaster && (
+                      <td className="px-5 py-3.5 text-gray-700 max-w-[9rem] truncate font-medium">
+                        {buyer.customerName || '—'}
+                      </td>
+                    )}
                     <td className="px-5 py-3.5 font-medium text-gray-900 max-w-[10rem] truncate">{buyer.name || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-700 whitespace-nowrap">{buyer.number}</td>
                     <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{buyer.dailyCap}</td>

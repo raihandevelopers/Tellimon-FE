@@ -5,6 +5,7 @@ function escapeCsv(value) {
 }
 
 const HEADERS = [
+  'Customer',
   'Buyer Name',
   'Buyer Number',
   'Status',
@@ -17,6 +18,7 @@ const HEADERS = [
 
 export function buildBuyerReportRows(reports = []) {
   return reports.map((row) => [
+    row.customerName || '',
     row.name || '',
     row.number || '',
     row.status || '',
