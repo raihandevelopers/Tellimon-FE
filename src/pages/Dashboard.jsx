@@ -13,6 +13,7 @@ import {
 import StatCard from '../components/ui/StatCard'
 import EmptyState from '../components/ui/EmptyState'
 import { api } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useLiveCalls } from '../context/LiveCallsContext'
 import { formatLiveDuration } from '../utils/formatLiveDuration'
 import { msUntilNextIstReset } from '../utils/istBusinessDay'
@@ -26,6 +27,7 @@ function formatDidDisplay(number) {
 }
 
 export default function Dashboard() {
+  const { isMaster } = useAuth()
   const { liveCalls, count: liveCount, refetch: refetchLiveCalls } = useLiveCalls()
   const [, setTick] = useState(0)
   const [connected, setConnected] = useState(true)
