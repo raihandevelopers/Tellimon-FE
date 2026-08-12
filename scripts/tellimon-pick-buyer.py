@@ -235,28 +235,61 @@ def local_fallback(did, caller, active=None):
             return False
         return True
 
-    if did_rec and did_rec.get('buyerId'):
+    campaign = campaigns.get(did_rec.get('campaignId')) if did_rec else None
+    # Stale campaign id on a customer DID — use their latest active campaign.
+    if not campaign and assigned and campaigns_list:
+        campaign = next((c for c in campaigns_list if c.get('active', True)), None)
+
+    if campaign and not campaign.get('active', True):
+        return None
+
+    def campaign_allows(buyer_id):
+        if not campaign:
+            return True
+        if campaign.get('active') is False:
+            return False
+        ids = [str(x) for x in (campaign.get('buyerIds') or [])]
+        if not ids:
+            return True
+        return str(buyer_id) in ids
+
+    if did_rec and did_rec.get('buyerId') and campaign_allows(did_rec.get('buyerId')):
         direct = next((b for b in buyers if b['id'] == did_rec['buyerId']), None)
         if direct and eligible(direct):
             return {
                 'buyerNumber': digits(direct['number']),
                 'buyerId': direct['id'],
                 'ringTimeout': max(1, int(direct.get('ringTimeout') or 60)),
-                'campaignId': did_rec.get('campaignId') or '',
+                'campaignId': (campaign or {}).get('id') or did_rec.get('campaignId') or '',
             }
 
-    campaign = campaigns.get(did_rec.get('campaignId')) if did_rec else None
-    # Stale master campaign id on a customer DID — use customer's first active campaign.
-    if not campaign and assigned and campaigns_list:
-        campaign = next((c for c in campaigns_list if c.get('active', True)), None)
-        if not campaign and campaigns_list:
-            campaign = campaigns_list[0]
-
+    # Preserve campaign buyerIds order as priority (1st = highest).
+    # Inactive already returned. Selected list = only those buyers.
     pool = buyers
     if campaign and campaign.get('active', True):
-        ids = {str(x) for x in (campaign.get('buyerIds') or [])}
+        ids = [str(x) for x in (campaign.get('buyerIds') or [])]
         if ids:
-            pool = [b for b in buyers if str(b.get('id', '')) in ids]
+            by_id = {str(b.get('id', '')): b for b in buyers}
+            ordered = []
+            for i, bid in enumerate(ids):
+                b = by_id.get(bid)
+                if b:
+                    bb = dict(b)
+                    bb['_rank'] = i
+                    ordered.append(bb)
+            pool = ordered
+        else:
+            pool = []
+            for b in buyers:
+                bb = dict(b)
+                bb['_rank'] = 1000 - int(b.get('priority') or 0)
+                pool.append(bb)
+    else:
+        pool = []
+        for b in buyers:
+            bb = dict(b)
+            bb['_rank'] = 1000 - int(b.get('priority') or 0)
+            pool.append(bb)
 
     pool = [b for b in pool if eligible(b)]
     if not pool:
@@ -273,6 +306,16 @@ def local_fallback(did, caller, active=None):
         if alt:
             pool = alt
 
+    def sort_key(b):
+        rank = b.get('_rank')
+        if rank is None:
+            rank = 1000 - int(b.get('priority') or 0)
+        return (
+            int(rank),
+            int(active.get(str(b.get('id', '')), 0)),
+            str(b.get('id', '')),
+        )
+
     strategy = (campaign or {}).get('strategy', 'Priority')
     if strategy == 'Sticky':
         sid = sticky.get(caller_d)
@@ -282,38 +325,17 @@ def local_fallback(did, caller, active=None):
                 pool = [hit]
         if not pool:
             return None
-        pick = sorted(
-            pool,
-            key=lambda b: (
-                -int(b.get('priority') or 0),
-                int(active.get(str(b.get('id', '')), 0)),
-                str(b.get('id', '')),
-            ),
-        )[0]
+        pick = sorted(pool, key=sort_key)[0]
     elif strategy == 'Random':
         import random
         pick = random.choice(pool)
     elif strategy == 'Round Robin':
         key = campaign['id'] if campaign else '__global__'
         idx = int(state.get('roundRobinIndex', {}).get(key, 0))
-        ordered = sorted(
-            pool,
-            key=lambda b: (
-                -int(b.get('priority') or 0),
-                int(active.get(str(b.get('id', '')), 0)),
-                str(b.get('id', '')),
-            ),
-        )
+        ordered = sorted(pool, key=sort_key)
         pick = ordered[idx % len(ordered)]
     else:
-        pick = sorted(
-            pool,
-            key=lambda b: (
-                -int(b.get('priority') or 0),
-                int(active.get(str(b.get('id', '')), 0)),
-                str(b.get('id', '')),
-            ),
-        )[0]
+        pick = sorted(pool, key=sort_key)[0]
 
     return {
         'buyerNumber': digits(pick['number']),
