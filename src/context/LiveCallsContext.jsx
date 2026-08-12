@@ -35,7 +35,7 @@ export function LiveCallsProvider({ children }) {
     }
 
     load()
-    const timer = setInterval(load, 3000)
+    const timer = setInterval(load, 10000)
     return () => {
       cancelled = true
       clearInterval(timer)

@@ -178,7 +178,7 @@ export default function Dashboard() {
 
       <p className="text-xs text-gray-500">
         Call totals reset daily at 8:00 AM IST
-        {stats.period?.label ? ` — current period: ${stats.period.label}` : ''}. Live calls update every 3 seconds.
+        {stats.period?.label ? ` — current period: ${stats.period.label}` : ''}. Live calls update every 10 seconds.
         {lastRefreshedLabel ? ` Last refreshed: ${lastRefreshedLabel} IST.` : ''}
       </p>
 
