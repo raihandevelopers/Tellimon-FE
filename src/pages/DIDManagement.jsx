@@ -45,8 +45,11 @@ export default function DIDManagement() {
         api.getCustomers(),
       ])
       setDids(didList)
-      setCampaigns(campaignList)
-      setBuyers(buyerList)
+      // DID routing on master form is admin-owned only (customer DIDs use customer campaigns)
+      setCampaigns(
+        isMaster ? campaignList.filter((c) => c.isAdminOwned) : campaignList
+      )
+      setBuyers(isMaster ? buyerList.filter((b) => b.isAdminOwned) : buyerList)
       setCustomers(customerList)
     } catch (err) {
       console.error(err)
@@ -58,7 +61,7 @@ export default function DIDManagement() {
 
   useEffect(() => {
     load()
-  }, [])
+  }, [isMaster])
 
   const handleAdd = async (e) => {
     e.preventDefault()

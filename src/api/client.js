@@ -37,7 +37,12 @@ export const api = {
 
   me: () => request('/auth/me'),
 
-  getBuyers: () => request('/buyers'),
+  getBuyers: (params = {}) => {
+    const q = new URLSearchParams()
+    if (params.own) q.set('own', '1')
+    const qs = q.toString()
+    return request(`/buyers${qs ? `?${qs}` : ''}`)
+  },
   getBuyerReports: (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return request(`/buyers/reports${q ? `?${q}` : ''}`)

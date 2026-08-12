@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi'
 import PrimaryButton from '../components/ui/PrimaryButton'
 import SearchInput from '../components/ui/SearchInput'
@@ -10,8 +10,15 @@ import { api } from '../api/client'
 import { formatDate } from '../utils/formatDate'
 import { useAuth } from '../context/AuthContext'
 
+/** Campaign buyer picker: only buyers owned by the campaign owner (admin vs customer). */
+function buyersForCampaignOwner(buyers, ownerUserId, isMaster) {
+  if (!isMaster) return buyers
+  if (!ownerUserId) return buyers.filter((b) => b.isAdminOwned)
+  return buyers.filter((b) => String(b.userId) === String(ownerUserId))
+}
+
 export default function Campaigns() {
-  const { isMaster } = useAuth()
+  const { user, isMaster } = useAuth()
   const [campaigns, setCampaigns] = useState([])
   const [buyers, setBuyers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -36,6 +43,15 @@ export default function Campaigns() {
   useEffect(() => {
     loadCampaigns()
   }, [])
+
+  const createBuyers = useMemo(
+    () => buyersForCampaignOwner(buyers, user?.id, isMaster),
+    [buyers, user?.id, isMaster]
+  )
+  const editBuyers = useMemo(
+    () => buyersForCampaignOwner(buyers, editCampaign?.userId || user?.id, isMaster),
+    [buyers, editCampaign?.userId, user?.id, isMaster]
+  )
 
   const filtered = campaigns.filter((c) => {
     const q = search.trim().toLowerCase()
@@ -197,7 +213,7 @@ export default function Campaigns() {
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
         mode="create"
-        buyers={buyers}
+        buyers={createBuyers}
         existingNames={namesForCreate}
       />
 
@@ -207,7 +223,7 @@ export default function Campaigns() {
         onSubmit={handleUpdate}
         initial={editCampaign || undefined}
         mode="edit"
-        buyers={buyers}
+        buyers={editBuyers}
         existingNames={namesForEdit}
       />
     </>
