@@ -38,7 +38,7 @@ export default function LiveCalls() {
 
   useEffect(() => {
     load()
-    const poll = setInterval(load, 10000)
+    const poll = setInterval(load, 3000)
     const timer = setInterval(() => setTick((t) => t + 1), 1000)
     return () => {
       clearInterval(poll)
@@ -66,14 +66,14 @@ export default function LiveCalls() {
   return (
     <div className="space-y-4">
       <InfoBanner>
-        Shows calls active on Asterisk. Server syncs every 10 seconds. Use Disconnect to hang up a call from the
+        Shows calls active on Asterisk. Server syncs every 3 seconds. Use Disconnect to hang up a call from the
         panel.
       </InfoBanner>
 
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-ink">Live Calls</h1>
-          <p className="text-sm text-gray-500 mt-1">Active calls on your Asterisk server (refreshes every 10s)</p>
+          <p className="text-sm text-gray-500 mt-1">Active calls on your Asterisk server (refreshes every 3s)</p>
         </div>
         <span className="flex items-center gap-2 text-sm text-brand font-medium shrink-0">
           <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
